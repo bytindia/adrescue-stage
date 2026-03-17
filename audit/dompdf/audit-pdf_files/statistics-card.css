@@ -1,0 +1,179 @@
+/*=========================================================================================
+  File Name: statistics-card.css
+  Description: Admin Statistics Card Css.
+  ----------------------------------------------------------------------------------------
+  Item Name: Advance Statistics Cards
+  Version: 1.1
+  Author: lonelyruddy
+  Author URL: https://codecanyon.net/user/lonelyruddy
+  
+==========================================================================================*/
+ 
+.font-small-1 {
+  font-size: 0.7rem !important; }
+
+.font-small-2 {
+  font-size: 0.8rem !important; }
+
+.font-small-3 {
+  font-size: 0.9rem !important; }
+
+.font-medium-1 {
+  font-size: 1.1rem !important; }
+
+.font-medium-2 {
+  font-size: 1.2rem !important; }
+
+.font-medium-3 {
+  font-size: 1.3rem !important; }
+
+.font-medium-4 {
+  font-size: 1.4rem !important; }
+
+.font-medium-5 {
+  font-size: 1.5rem !important; }
+
+.font-large-1 {
+  font-size: 2rem !important; }
+
+.font-large-2 {
+  font-size: 3rem !important; }
+
+.font-large-3 {
+  font-size: 4rem !important; }
+
+.font-large-4 {
+  font-size: 5rem !important; }
+
+.font-large-5 {
+  font-size: 6rem !important; }
+
+.text-bold-100 {
+  font-weight: 100; }
+
+.text-bold-200 {
+  font-weight: 200; }
+
+.text-bold-300 {
+  font-weight: 300; }
+
+.text-bold-400 {
+  font-weight: 400; }
+
+.text-bold-500 {
+  font-weight: 500; }
+
+.text-bold-600 {
+  font-weight: 600; }
+
+.text-bold-700 {
+  font-weight: 700; }
+
+.text-bold-800 {
+  font-weight: 800; }
+
+.text-bold-900 {
+  font-weight: 900; }
+
+.text-italic {
+  font-style: italic; }
+
+.text-highlight {
+  padding: 4px 6px; }
+
+ 
+.bs-example [class^="col-"] {
+  margin-bottom: 1rem; }
+  .bs-example [class^="col-"] span {
+    padding: .75rem;
+    background-color: rgba(86, 61, 124, 0.15);
+    border: 1px solid rgba(86, 61, 124, 0.2);
+    display: block; }
+
+.bs-example .row + .row {
+  margin-top: 1rem; }
+ 
+.card-group, .card-deck {
+  margin-bottom: 0.75rem; }
+
+.card {
+  box-shadow: 0px 2px 1px rgba(0, 0, 0, 0.05);
+  margin-bottom: 1.875rem;
+  border-radius: 0; }
+  .card .card-title {
+    text-transform: capitalize;
+    font-weight: 600;
+    letter-spacing: 0.4px; }
+  .card .card-bordered {
+    border: 1px solid rgba(0, 0, 0, 0.06); }
+  .card.card-fullscreen {
+    display: block;
+    z-index: 9999;
+    position: fixed;
+    width: 100% !important;
+    height: 100% !important;
+    top: 0;
+    right: 0;
+    left: 0;
+    bottom: 0;
+    overflow: auto; }
+  .card .card-block[class*='border-bottom-'] {
+    border-bottom-width: 2px !important; }
+  .card .card-img-overlay.bg-overlay {
+    background: rgba(0, 0, 0, 0.45); }
+  .card .card-img-overlay .text-muted {
+    color: #373a3c !important; }
+  .card.card-minimal {
+    border: none;
+    box-shadow: none; }
+
+.card-moved .card, .card-moved .card-header {
+  background-color: #F6BB42;
+  color: #FFFFFF; }
+
+.handle, .titleArea {
+  cursor: move; }
+
+.card-header {
+  border-bottom: 1px solid #EEEEEE; }
+  .card-header .card-title {
+    margin-bottom: 0; }
+  .card-header .heading-elements,
+  .card-header .heading-elements-toggle {
+    background-color: inherit;
+    position: absolute;
+    top: 14px;
+    right: 21px; }
+    .card-header .heading-elements.heading-top-elements,
+    .card-header .heading-elements-toggle.heading-top-elements {
+      top: 0px; }
+    .card-header .heading-elements i,
+    .card-header .heading-elements-toggle i {
+      color: #818a91; }
+    .card-header .heading-elements a,
+    .card-header .heading-elements-toggle a {
+      padding: 0 8px; }
+
+.card-footer {
+  border-top: 1px solid #EEEEEE; }
+
+.card-inverse .card-text {
+  color: white; }
+
+.card-inverse .card-img-overlay .text-muted {
+  color: #FFF !important; }
+
+.card-inverse code {
+  background-color: white; }
+
+.card-inverse .heading-elements i {
+  color: #FFF; }
+
+.card-head-inverse {
+  color: #FFF; }
+  .card-head-inverse .heading-elements i {
+    color: #FFF; }
+
+.card-transparent {
+  background-color: transparent; }
+  

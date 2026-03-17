@@ -1,0 +1,173 @@
+body {
+    font-family: 'Arial', sans-serif;
+    background-color: #f9f9f9;
+}
+
+.tabs-container {
+    margin-top: 50px;
+    margin-bottom: 30px;
+    background-color: #fff;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+    border-radius: 8px;
+    padding: 20px;
+}
+
+.nav-tabs {
+    border: none;
+    margin-bottom: 20px;
+}
+
+.nav-tabs .nav-link {
+    border: none;
+    color: #007b5e;
+    font-weight: 600;
+    background-color: transparent;
+    padding: 12px 20px;
+    margin-right: 10px;
+    border-radius: 30px;
+    transition: all 0.3s ease;
+}
+
+.nav-tabs .nav-link:hover {
+    color: #fff;
+    background-color: #007b5e;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+}
+
+.nav-tabs .nav-link.active {
+    color: #fff;
+    background-color: #007b5e;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+}
+
+.tab-content {
+    padding: 20px;
+    background-color: #fff;
+    border-radius: 8px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+}
+
+.tab-pane {
+    display: none;
+    animation: fadeIn 0.3s ease-in-out;
+}
+
+.tab-pane.active {
+    display: block;
+}
+
+@keyframes fadeIn {
+    0% { opacity: 0; }
+    100% { opacity: 1; }
+}
+
+.table th, .table td {
+    text-align: center;
+}
+
+.table-container {
+    margin-top: 20px;
+}
+
+.table thead {
+    background-color: #2690cf;
+    color: white;
+}
+
+/* Modern Design for DataTable */
+.dataTables_wrapper .dataTables_filter input {
+    
+    border: 1px solid #ddd;
+    padding: 8px 20px;
+    font-size: 14px;
+    width: 250px;
+    transition: border 0.3s ease;
+}
+
+.dataTables_wrapper .dataTables_filter input:focus {
+    border: 1px solid #007b5e;
+}
+
+.dataTables_wrapper .dt-buttons {
+    display: flex;
+    gap: 10px;
+}
+
+.dt-button {
+    background-color: #007b5e;
+    color: white;
+    padding: 8px 15px;
+    font-size: 14px;
+    border: none;
+    border-radius: 30px;
+    transition: background-color 0.3s ease;
+    cursor: pointer;
+}
+
+.dt-button:hover {
+    background-color: #005f43;
+}
+
+.dt-button:focus {
+    outline: none;
+}
+
+/* Dropdown Styling */
+.filter-container {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 20px;
+    float:right;
+}
+
+.filter-container select {
+    
+
+    border: 1px solid #ddd;
+    padding: 8px 20px;
+    font-size: 14px;
+    transition: border 0.3s ease;
+    width: 200px;
+}
+
+.filter-container select:focus {
+    border: 1px solid #007b5e;
+}
+
+.filter-container input {
+    background-color: #f9f9f9;
+    font-family: "Roboto", serif;
+    font-optical-sizing: auto;
+    font-weight: <weight>;
+    font-style: normal;
+    font-variation-settings: "wdth" 200;
+}
+
+.filter-container input:focus {
+    border: 1px solid #007b5e;
+}
+
+.filter-container .dataTables_wrapper .dt-buttons {
+    margin-left: auto;
+}
+
+.filter-container .btn-group {
+    display: flex;
+    gap: 10px;
+}
+/* Flexbox layout for chart containers */
+.chart-container {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    gap: 20px;
+}
+
+.chart {
+    flex-grow: 1;
+    /* Adjust the width for the number of charts */
+    min-width: 30%; /* Makes the chart take at least 30% of the width */
+    max-width: 48%;
+    height: 200px;
+}

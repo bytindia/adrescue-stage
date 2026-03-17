@@ -1,0 +1,60 @@
+# =============================================================================
+# AdsNinja / AdRescue – .gitignore
+# =============================================================================
+
+# ── Credentials & secrets ─────────────────────────────────────────────────────
+.env
+config-passwords.php
+
+# Google Ads INI files (all copies across subdirs)
+adsapi_php.ini
+**/adsapi_php.ini
+google_ads_php.ini
+**/google_ads_php.ini
+
+# Google OAuth2 JSON key / token files
+client_secret_*.json
+gmail-token.json
+**/gmail-token.json
+
+# SSL certificates
+*.crt
+*.key
+*.pem
+*.ca-bundle
+
+# ── Logs & temporary files ────────────────────────────────────────────────────
+error_log
+*.log
+*.txt
+curl_response_*.txt
+rdb-output.txt
+dlf-output.txt
+rwd-output.txt
+post-promo.txt
+webhook_log.txt
+
+# ── OS / editor artefacts ─────────────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# ── Composer vendor directories ───────────────────────────────────────────────
+# (uncomment the lines below if you want to ignore vendor dirs from Git)
+# vendor/
+# g-vendor/
+# vendors/
+# vendor-linkedin/
+# vendor-meta/
+
+# ── Embedded sub-repos / local clones / SQL dumps ───────────────────────────
+fb-ads/demo/
+**/*.sql
+adrescue-stage/
+*.bundle
+
+# ── Build / cache ─────────────────────────────────────────────────────────────
+build/

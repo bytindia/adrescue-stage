@@ -1,0 +1,501 @@
+<!DOCTYPE html>
+<html lang="en" class="fixed sidebar-left-collapsed">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <!-- Meta, title, CSS, favicons, etc. -->
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+	<link rel="icon" href="images/favicon.ico" type="image/ico" />
+	    <title>AdRescue</title>
+
+    <!-- Bootstrap -->
+    <link href="vendors/bootstrap/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link href="vendors/font-awesome/css/font-awesome.min.css" rel="stylesheet">
+    <!-- NProgress -->
+    <link href="vendors/nprogress/nprogress.css" rel="stylesheet">
+    <!-- iCheck -->
+    <link href="vendors/iCheck/skins/flat/green.css" rel="stylesheet">
+	
+    <!-- bootstrap-progressbar -->
+    <link href="vendors/bootstrap-progressbar/css/bootstrap-progressbar-3.3.4.min.css" rel="stylesheet">
+    <!-- JQVMap -->
+    <link href="vendors/jqvmap/dist/jqvmap.min.css" rel="stylesheet"/>
+    <!-- bootstrap-daterangepicker -->
+    <link href="vendors/bootstrap-daterangepicker/daterangepicker.css" rel="stylesheet">
+
+    <!-- Custom Theme Style -->
+    <link href="build/css/custom.css" rel="stylesheet">
+    <link href="/web/pagination.css" rel="stylesheet">
+    <link href="assets/css/pagination.css" rel="stylesheet">
+    <link href="vendors/datatables.net-bs/css/dataTables.bootstrap.min.css" rel="stylesheet">
+  </head><style>
+.dataTables_wrapper { font-size:15px; } 
+table.table-bordered.dataTable tbody th, table.table-bordered.dataTable tbody td { vertical-align:middle; }
+.nav-sm .main_container .top_nav, .nav-sm .container.body .right_col, .nav-sm footer { margin-left:0px; }
+#menu_toggle { display:none; }
+.blue { cursor:pointer; } 
+thead {color:green; background:#fff; }
+tfoot {color:red;}
+.even { background:#fff; }
+.blue_txt { color: blue; font-weight:bold; }
+.btn-sm { color:#F9F5F5; }
+.btn-primary { background:#2283f3; }
+</style>
+  <body class="nav-md">
+    <div class="container body">
+      <div class="main_container">
+        <!-- top navigation -->
+<style>
+#menu_toggle { display:block; }
+#menu_toggle img { margin-bottom: 10px; margin-top:-10px; }
+html, body { padding:0px; } 
+.toggle { width:auto; } 
+.main_container .top_nav, .nav-md .container.body .right_col, footer { margin-left:0px; }
+</style>
+<script>$('#menu_toggle').click(); </script>
+        <div class="top_nav">
+          <div class="nav_menu">
+            <nav>
+              <div class="nav toggle">
+                <a href="loading.php?pg=index.php" id="menu_toggle"><img src="images/adrescue-logo.png" alt="..." height="150"></a>
+              </div>
+
+              <ul class="nav navbar-nav navbar-right">
+                <li class="">
+                  <a href="loading.php?pg=javascript:;" class="user-profile dropdown-toggle" data-toggle="dropdown" aria-expanded="false">
+                    <img src="images/user.png" alt="">Admin                    <span class=" fa fa-angle-down"></span>
+                  </a>
+                  <ul class="dropdown-menu dropdown-usermenu pull-right" style="right:0px !important;">
+                    <!--<li><a href="loading.php?pg=fb-login.php?update=1"> FB Login (Update)</a></li>-->
+                    <li><a href="loading.php?pg=?permission=1"> Remove FB Permissions</a></li>
+                    <li><a href="loading.php?pg=logout.php"><i class="fa fa-sign-out pull-right"></i> Log Out</a></li>
+                  </ul>
+                </li>
+
+                
+              </ul>
+            </nav>
+          </div>
+        </div>
+        <!-- /top navigation -->
+        
+
+        <!-- page content -->
+         <div class="right_col" role="main">
+          
+         <div class="row">
+              <div class="col-md-12 col-sm-12 col-xs-12">
+                <div class="x_panel">
+                 
+                  <div class="x_title">
+                    <h2>BYT Ads Rescue - Audit List</h2>
+                                        <ul class="nav navbar-right panel_toolbox">
+                      <li> &nbsp;
+                      </li>
+                      <li>
+                        <div class="btn-group  btn-group-lg">
+                        	<a href="loading.php?pg=add-account.php"  class="btn btn-primary btn-lg">GET STARTED</a>                        
+                      </div>    
+                      </li>
+                    </ul>
+                                       <div class="clearfix"></div>
+                  </div>
+                  
+                  <div class="x_content">
+                  		                                <form method="post" action="">
+                                <table id="datatable" class="table table-hover table-striped table-bordered">
+                                    <thead>                                        
+                                        <th>SNo</th>                                  	
+                                        <th>Facebook Ad Account</th>
+                                        <th>Facebook Page</th> 
+                                        <th>Objective Type</th> 
+                                        <th>Created</th> 
+                                        <th width="22%">Audit Report</th> 
+                                        <th width="16%">Edit</th>     	
+                                    </thead>
+                                    <tbody>
+                                    	                                        <tr>                                        	
+                                            <td>1</td>
+                                            <td>Orchids Kovai (INR)</td>
+                                            <td>Orchids Kovai</td>
+                                             <td>Both</td>
+                                            <td>30-Jun-2020 09:49 am</td>
+                                            <td>
+                                                                                        <div class="btn-group" role="group" aria-label="Basic example">
+ 
+                                             <a href="loading.php?pg=audit.php?tbl_id=26" class="btn btn-primary btn-lg" target="_blank"> View</a> 
+                                            <a href="loading.php?pg=pdf_from_url.php?id=26" class="btn btn-primary btn-lg"> Email</a>
+                                            </div>
+
+                                                                                        </td>
+                                            <td>
+                                            <div class="btn-group" role="group" aria-label="Basic example">
+
+                                            <a href="loading.php?pg=audit-report.php?tbl_id=26&refresh=1" target="_blank" class="btn btn-primary btn-lg"><i class="fa fa-refresh"></i></a>
+                                            <a href="loading.php?pg=add-account.php?id=26" class="btn btn-primary btn-lg"><i class="fa fa-pencil"></i> </a>
+                                    <a href="loading.php?pg=#" onclick="return confirm('Are you sure you want to delete this?');"  class="btn btn-primary btn-lg"><i class="fa fa-trash-o"></i></a>
+                                    		</div>
+                                    
+                                    		</td>                              	
+                                        </tr>  
+                                                                                <tr>                                        	
+                                            <td>2</td>
+                                            <td>FPL Hyndai (BYT)</td>
+                                            <td>FPL Hyundai</td>
+                                             <td>Both</td>
+                                            <td>30-Jun-2020 09:42 am</td>
+                                            <td>
+                                                                                        <div class="btn-group" role="group" aria-label="Basic example">
+ 
+                                             <a href="loading.php?pg=audit.php?tbl_id=25" class="btn btn-primary btn-lg" target="_blank"> View</a> 
+                                            <a href="loading.php?pg=pdf_from_url.php?id=25" class="btn btn-primary btn-lg"> Email</a>
+                                            </div>
+
+                                                                                        </td>
+                                            <td>
+                                            <div class="btn-group" role="group" aria-label="Basic example">
+
+                                            <a href="loading.php?pg=audit-report.php?tbl_id=25&refresh=1" target="_blank" class="btn btn-primary btn-lg"><i class="fa fa-refresh"></i></a>
+                                            <a href="loading.php?pg=add-account.php?id=25" class="btn btn-primary btn-lg"><i class="fa fa-pencil"></i> </a>
+                                    <a href="loading.php?pg=#" onclick="return confirm('Are you sure you want to delete this?');"  class="btn btn-primary btn-lg"><i class="fa fa-trash-o"></i></a>
+                                    		</div>
+                                    
+                                    		</td>                              	
+                                        </tr>  
+                                                                                <tr>                                        	
+                                            <td>3</td>
+                                            <td>Partha Sarathy</td>
+                                            <td>RWD</td>
+                                             <td>Both</td>
+                                            <td>10-Jun-2020 07:44 am</td>
+                                            <td>
+                                                                                        <div class="btn-group" role="group" aria-label="Basic example">
+ 
+                                             <a href="loading.php?pg=audit.php?tbl_id=11" class="btn btn-primary btn-lg" target="_blank"> View</a> 
+                                            <a href="loading.php?pg=pdf_from_url.php?id=11" class="btn btn-primary btn-lg"> Email</a>
+                                            </div>
+
+                                                                                        </td>
+                                            <td>
+                                            <div class="btn-group" role="group" aria-label="Basic example">
+
+                                            <a href="loading.php?pg=audit-report.php?tbl_id=11&refresh=1" target="_blank" class="btn btn-primary btn-lg"><i class="fa fa-refresh"></i></a>
+                                            <a href="loading.php?pg=add-account.php?id=11" class="btn btn-primary btn-lg"><i class="fa fa-pencil"></i> </a>
+                                    <a href="loading.php?pg=#" onclick="return confirm('Are you sure you want to delete this?');"  class="btn btn-primary btn-lg"><i class="fa fa-trash-o"></i></a>
+                                    		</div>
+                                    
+                                    		</td>                              	
+                                        </tr>  
+                                                                                <tr>                                        	
+                                            <td>4</td>
+                                            <td>Partha Sarathy</td>
+                                            <td>RWD</td>
+                                             <td>Lead Generation</td>
+                                            <td>10-Jun-2020 07:33 am</td>
+                                            <td>
+                                                                                        <div class="btn-group" role="group" aria-label="Basic example">
+ 
+                                             <a href="loading.php?pg=audit.php?tbl_id=10" class="btn btn-primary btn-lg" target="_blank"> View</a> 
+                                            <a href="loading.php?pg=pdf_from_url.php?id=10" class="btn btn-primary btn-lg"> Email</a>
+                                            </div>
+
+                                                                                        </td>
+                                            <td>
+                                            <div class="btn-group" role="group" aria-label="Basic example">
+
+                                            <a href="loading.php?pg=audit-report.php?tbl_id=10&refresh=1" target="_blank" class="btn btn-primary btn-lg"><i class="fa fa-refresh"></i></a>
+                                            <a href="loading.php?pg=add-account.php?id=10" class="btn btn-primary btn-lg"><i class="fa fa-pencil"></i> </a>
+                                    <a href="loading.php?pg=#" onclick="return confirm('Are you sure you want to delete this?');"  class="btn btn-primary btn-lg"><i class="fa fa-trash-o"></i></a>
+                                    		</div>
+                                    
+                                    		</td>                              	
+                                        </tr>  
+                                                                                <tr>                                        	
+                                            <td>5</td>
+                                            <td>Partha Sarathy</td>
+                                            <td>RWD</td>
+                                             <td>Lead Generation</td>
+                                            <td>10-Jun-2020 07:31 am</td>
+                                            <td>
+                                                                                        <div class="btn-group" role="group" aria-label="Basic example">
+ 
+                                             <a href="loading.php?pg=audit.php?tbl_id=9" class="btn btn-primary btn-lg" target="_blank"> View</a> 
+                                            <a href="loading.php?pg=pdf_from_url.php?id=9" class="btn btn-primary btn-lg"> Email</a>
+                                            </div>
+
+                                                                                        </td>
+                                            <td>
+                                            <div class="btn-group" role="group" aria-label="Basic example">
+
+                                            <a href="loading.php?pg=audit-report.php?tbl_id=9&refresh=1" target="_blank" class="btn btn-primary btn-lg"><i class="fa fa-refresh"></i></a>
+                                            <a href="loading.php?pg=add-account.php?id=9" class="btn btn-primary btn-lg"><i class="fa fa-pencil"></i> </a>
+                                    <a href="loading.php?pg=#" onclick="return confirm('Are you sure you want to delete this?');"  class="btn btn-primary btn-lg"><i class="fa fa-trash-o"></i></a>
+                                    		</div>
+                                    
+                                    		</td>                              	
+                                        </tr>  
+                                                                                <tr>                                        	
+                                            <td>6</td>
+                                            <td>Altis Ashraya (INR)</td>
+                                            <td>Altis Ville</td>
+                                             <td>Lead Generation</td>
+                                            <td>10-Jun-2020 07:21 am</td>
+                                            <td>
+                                                                                        <div class="btn-group" role="group" aria-label="Basic example">
+ 
+                                             <a href="loading.php?pg=audit.php?tbl_id=8" class="btn btn-primary btn-lg" target="_blank"> View</a> 
+                                            <a href="loading.php?pg=pdf_from_url.php?id=8" class="btn btn-primary btn-lg"> Email</a>
+                                            </div>
+
+                                                                                        </td>
+                                            <td>
+                                            <div class="btn-group" role="group" aria-label="Basic example">
+
+                                            <a href="loading.php?pg=audit-report.php?tbl_id=8&refresh=1" target="_blank" class="btn btn-primary btn-lg"><i class="fa fa-refresh"></i></a>
+                                            <a href="loading.php?pg=add-account.php?id=8" class="btn btn-primary btn-lg"><i class="fa fa-pencil"></i> </a>
+                                    <a href="loading.php?pg=#" onclick="return confirm('Are you sure you want to delete this?');"  class="btn btn-primary btn-lg"><i class="fa fa-trash-o"></i></a>
+                                    		</div>
+                                    
+                                    		</td>                              	
+                                        </tr>  
+                                                                                <tr>                                        	
+                                            <td>7</td>
+                                            <td>Partha Sarathy</td>
+                                            <td>RWD</td>
+                                             <td>Both</td>
+                                            <td>06-Jun-2020 06:01 am</td>
+                                            <td>
+                                                                                        <div class="btn-group" role="group" aria-label="Basic example">
+ 
+                                             <a href="loading.php?pg=audit.php?tbl_id=7" class="btn btn-primary btn-lg" target="_blank"> View</a> 
+                                            <a href="loading.php?pg=pdf_from_url.php?id=7" class="btn btn-primary btn-lg"> Email</a>
+                                            </div>
+
+                                                                                        </td>
+                                            <td>
+                                            <div class="btn-group" role="group" aria-label="Basic example">
+
+                                            <a href="loading.php?pg=audit-report.php?tbl_id=7&refresh=1" target="_blank" class="btn btn-primary btn-lg"><i class="fa fa-refresh"></i></a>
+                                            <a href="loading.php?pg=add-account.php?id=7" class="btn btn-primary btn-lg"><i class="fa fa-pencil"></i> </a>
+                                    <a href="loading.php?pg=#" onclick="return confirm('Are you sure you want to delete this?');"  class="btn btn-primary btn-lg"><i class="fa fa-trash-o"></i></a>
+                                    		</div>
+                                    
+                                    		</td>                              	
+                                        </tr>  
+                                                                                <tr>                                        	
+                                            <td>8</td>
+                                            <td>Partha Sarathy</td>
+                                            <td>RWD</td>
+                                             <td>Both</td>
+                                            <td>03-Jun-2020 08:23 am</td>
+                                            <td>
+                                                                                        <div class="btn-group" role="group" aria-label="Basic example">
+ 
+                                             <a href="loading.php?pg=audit.php?tbl_id=2" class="btn btn-primary btn-lg" target="_blank"> View</a> 
+                                            <a href="loading.php?pg=pdf_from_url.php?id=2" class="btn btn-primary btn-lg"> Email</a>
+                                            </div>
+
+                                                                                        </td>
+                                            <td>
+                                            <div class="btn-group" role="group" aria-label="Basic example">
+
+                                            <a href="loading.php?pg=audit-report.php?tbl_id=2&refresh=1" target="_blank" class="btn btn-primary btn-lg"><i class="fa fa-refresh"></i></a>
+                                            <a href="loading.php?pg=add-account.php?id=2" class="btn btn-primary btn-lg"><i class="fa fa-pencil"></i> </a>
+                                    <a href="loading.php?pg=#" onclick="return confirm('Are you sure you want to delete this?');"  class="btn btn-primary btn-lg"><i class="fa fa-trash-o"></i></a>
+                                    		</div>
+                                    
+                                    		</td>                              	
+                                        </tr>  
+                                                                                <tr>                                        	
+                                            <td>9</td>
+                                            <td>Partha Sarathy</td>
+                                            <td>RWD</td>
+                                             <td>Both</td>
+                                            <td>27-May-2020 06:15 am</td>
+                                            <td>
+                                                                                        <div class="btn-group" role="group" aria-label="Basic example">
+ 
+                                             <a href="loading.php?pg=audit.php?tbl_id=1" class="btn btn-primary btn-lg" target="_blank"> View</a> 
+                                            <a href="loading.php?pg=pdf_from_url.php?id=1" class="btn btn-primary btn-lg"> Email</a>
+                                            </div>
+
+                                                                                        </td>
+                                            <td>
+                                            <div class="btn-group" role="group" aria-label="Basic example">
+
+                                            <a href="loading.php?pg=audit-report.php?tbl_id=1&refresh=1" target="_blank" class="btn btn-primary btn-lg"><i class="fa fa-refresh"></i></a>
+                                            <a href="loading.php?pg=add-account.php?id=1" class="btn btn-primary btn-lg"><i class="fa fa-pencil"></i> </a>
+                                    <a href="loading.php?pg=#" onclick="return confirm('Are you sure you want to delete this?');"  class="btn btn-primary btn-lg"><i class="fa fa-trash-o"></i></a>
+                                    		</div>
+                                    
+                                    		</td>                              	
+                                        </tr>  
+                                                                              
+                                    </tbody>
+                                </table>
+                                
+								<div id="pagDiv"></div>
+
+								          				</div>
+                </div>
+              </div>
+        </div>
+        </div>
+        <!-- /page content -->
+<script>
+function onAjax(id,ty,clName) {
+					//var id = $(this).attr('data-id');
+					//alert(id);
+					$('.modal-body').html('loading');
+					$.ajax({
+						type: 'POST',
+						url: 'ajax-cashflow.php',
+						data:{id: id, ty: ty},
+						success: function(data) {
+							//alert(data);
+						  $('#myModalLabel').html(clName);
+						  $('.modal-body').html(data);
+						},
+						error:function(err){
+						  alert("error"+JSON.stringify(err));
+						}
+					});
+					
+};
+</script>
+<!-- footer content -->
+        <footer>
+          <div class="pull-right text-center">
+            Copyright © 2020 BYT. All rights reserved. Privacy & Legal Policies.
+          </div>
+          <div class="clearfix"></div>
+        </footer>
+        <!-- /footer content -->
+      </div>
+    </div>
+<link href="vendors/switchery/dist/switchery.min.css" rel="stylesheet">
+   <!-- jQuery -->
+    <script src="vendors/jquery/dist/jquery.min.js"></script>
+    <!-- Bootstrap -->
+    <script src="vendors/bootstrap/dist/js/bootstrap.min.js"></script>
+    <!-- FastClick -->
+    <script src="vendors/fastclick/lib/fastclick.js"></script>
+    <!-- NProgress -->
+    <script src="vendors/nprogress/nprogress.js"></script>
+    <!-- Chart.js -->
+    <script src="vendors/Chart.js/dist/Chart.min.js"></script>
+    <!-- gauge.js -->
+    <script src="vendors/gauge.js/dist/gauge.min.js"></script>
+    <!-- bootstrap-progressbar -->
+    <script src="vendors/bootstrap-progressbar/bootstrap-progressbar.min.js"></script>
+    <!-- iCheck -->
+    <script src="vendors/iCheck/icheck.min.js"></script>
+    <!-- Skycons -->
+    <script src="vendors/skycons/skycons.js"></script>
+    <!-- Flot -->
+    <script src="vendors/Flot/jquery.flot.js"></script>
+    <script src="vendors/Flot/jquery.flot.pie.js"></script>
+    <script src="vendors/Flot/jquery.flot.time.js"></script>
+    <script src="vendors/Flot/jquery.flot.stack.js"></script>
+    <script src="vendors/Flot/jquery.flot.resize.js"></script>
+    <!-- Flot plugins -->
+    <script src="vendors/flot.orderbars/js/jquery.flot.orderBars.js"></script>
+    <script src="vendors/flot-spline/js/jquery.flot.spline.min.js"></script>
+    <script src="vendors/flot.curvedlines/curvedLines.js"></script>
+    <!-- DateJS -->
+    <script src="vendors/DateJS/build/date.js"></script>
+    <!-- JQVMap -->
+    <script src="vendors/jqvmap/dist/jquery.vmap.js"></script>
+    <script src="vendors/jqvmap/dist/maps/jquery.vmap.world.js"></script>
+    <script src="vendors/jqvmap/examples/js/jquery.vmap.sampledata.js"></script>
+    <!-- bootstrap-daterangepicker -->
+    <script src="vendors/moment/min/moment.min.js"></script>
+    <script src="vendors/bootstrap-daterangepicker/daterangepicker.js"></script>
+	<script src="vendors/datatables.net/js/jquery.dataTables.min.js"></script>
+    <!-- Custom Theme Scripts -->
+    <script src="build/js/custom.js"></script>
+	
+	<script type="text/javascript">
+	var isMob = false;
+	if( /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) ) {
+	 isMob = true;
+	} 
+	$('#datatable').dataTable( {
+	 		 "pageLength": 50,
+			 "lengthMenu": [[10, 25, 50, 100, -1], [10, 25, 50, 100, "All"]]
+	} );
+	$('#datatable').on( 'page.dt', function () {
+		$('html, body').animate({ 
+			scrollTop: 0
+		}, 300);
+	} );
+		
+var startDate, startDate2;
+var endDate, endDate2;
+
+var d1 = '06/13/2020';
+var d2 = '07/13/2020';
+
+
+$(document).ready(function() {
+	
+	if(isMob==false) { $('#menu_toggle').click(); }
+	
+    $('#reportrange_right').daterangepicker(
+       {
+          startDate: moment(d1).toDate(),
+          endDate: moment(d2).toDate(),
+         
+          dateLimit: { days: 60 },
+          showDropdowns: true,
+          showWeekNumbers: true,
+          timePicker: false,
+          timePickerIncrement: 1,
+          timePicker12Hour: true,
+          ranges: {
+             'Today': [moment(), moment()],
+             'Yesterday': [moment().subtract('days', 1), moment().subtract('days', 1)],
+             'Last 7 Days': [moment().subtract('days', 6), moment()],
+             'Last 30 Days': [moment().subtract('days', 29), moment()],
+             'This Month': [moment().startOf('month'), moment().endOf('month')],
+             'Last Month': [moment().subtract('month', 1).startOf('month'), moment().subtract('month', 1).endOf('month')]
+          },
+          opens: 'left',
+          buttonClasses: ['btn btn-default'],
+          applyClass: 'btn-small btn-primary',
+          cancelClass: 'btn-small',
+          format: 'DD/MM/YYYY',
+          separator: ' to ',
+          locale: {
+              applyLabel: 'Submit',
+              fromLabel: 'From',
+              toLabel: 'To',
+              customRangeLabel: 'Custom Range',
+              daysOfWeek: ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr','Sa'],
+              monthNames: ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'],
+              firstDay: 1
+          }
+       },
+       function(start, end) {
+        console.log("Callback has been called!");
+        $('#reportrange_right span').html(start.format('D MMMM YYYY') + ' - ' + end.format('D MMMM YYYY'));
+         startDate = start;
+         endDate = end;   
+		  $('#stDt').val(moment(startDate).format('MM/DD/Y'));
+		  $('#enDt').val(moment(endDate).format('MM/DD/Y'));
+
+       }
+    );
+	$('#reportrange_right span').html(moment(d1).format('D MMMM YYYY') + ' - ' + moment(d2).format('D MMMM YYYY'));
+	
+		
+    $('#saveBtn').click(function(){
+        console.log(startDate.format('D MMMM YYYY') + ' - ' + endDate.format('D MMMM YYYY'));
+    });
+
+ });
+</script> 
+  </body>
+</html>

@@ -1,0 +1,210 @@
+/* index.css - Styles moved from index.php */
+
+/* --- Modal Styles --- */
+.modal-xl {
+  width: 90%;
+  max-width: 90%;
+}
+.modal-body {
+  padding: 0;
+}
+#modalIframe {
+  width: 100%;
+  height: 85vh;
+  border: none;
+}
+.modal-header {
+  padding: 10px 15px;
+  background: #f8f9fa;
+  border-bottom: 1px solid #dee2e6;
+}
+.modal-header .close {
+  margin-top: 2px;
+}
+.modal-title {
+  font-weight: 600;
+  color: #333;
+}
+
+/* --- Main section tabs --- */
+.nav-tabs > li > a {
+  color: #2196f3;
+  font-weight: 600;
+  padding: 10px 20px;
+}
+.nav-tabs > li.active > a,
+.nav-tabs > li.active > a:focus,
+.nav-tabs > li.active > a:hover {
+  background: #2196f3 !important;
+  color: #fff !important;
+  border-radius: 4px 4px 0 0;
+  border: none;
+}
+
+/* --- AdTracker subtabs --- */
+#adtrackerSubTab {
+  background: #f8f9fa;
+  padding: 10px 10px 0;
+  border-bottom: 1px solid #dee2e6;
+}
+#adtrackerSubTab > li > a {
+  padding: 8px 15px;
+  font-size: 13px;
+}
+
+/* --- Table styles --- */
+.table {
+  margin-bottom: 0;
+}
+.table > thead > tr > th {
+  background: #f8f9fa;
+  border-bottom: 2px solid #dee2e6;
+}
+
+/* --- DataTables overrides --- */
+.dataTables_wrapper {
+  padding: 15px;
+}
+.dataTables_scrollBody {
+  border-bottom: none !important;
+}
+
+/* --- Troubleshoot/AdTracker section height --- */
+.x_content[style*='max-height:260px'],
+.x_content[style*='max-height:442px'] {
+  max-height: 442px !important;
+}
+
+/* --- Highlight active AdTracker tab in blue --- */
+#adtrackerTab > li.active > a,
+#adtrackerTab > li.active > a:focus,
+#adtrackerTab > li.active > a:hover {
+  background: #2196f3 !important;
+  color: #fff !important;
+  border-radius: 4px 4px 0 0;
+  border: none;
+}
+#adtrackerTab > li > a {
+  color: #2196f3;
+  font-weight: 600;
+  border: none;
+}
+
+/* --- Quick Links Cards Hover --- */
+.menu .item:hover, .menu .dropdown-content a:hover {
+  /*background: #e3f0fb !important;
+  color: #1976d2 !important;*/
+  transition: background 0.2s;
+}
+
+/* --- Responsive adjustments for nav search --- */
+.menu-container { flex-wrap: wrap; }
+.menu { display: flex; flex-wrap: wrap; align-items: center; }
+.nav-search { flex-shrink: 1; min-width: 0; }
+.nav-search input#navSearchInput {
+  width: 140px;
+  max-width: 100%;
+  min-width: 0;
+  margin-right: 8px;
+  box-sizing: border-box;
+}
+@media (max-width: 900px) {
+  .nav-search { margin-left: 8px !important; }
+  .nav-search input#navSearchInput { width: 100px; }
+}
+@media (max-width: 600px) {
+  .menu-container { flex-direction: column; align-items: stretch; }
+  .menu { flex-direction: column; align-items: stretch; }
+  .nav-search { margin-left: 0 !important; width: 100%; }
+  .nav-search input#navSearchInput { width: 100%; min-width: 0; }
+}
+
+/* --- Dashboard & Quick Links Card Styles --- */
+.dashboard-card {
+  border-radius: 12px;
+  box-shadow: 0 2px 8px #e3e3e3;
+  background: #fff;
+  margin-bottom: 16px;
+  position: relative;
+  padding: 18px 18px 12px 18px;
+}
+.dashboard-card-quick {
+  padding: 25px;
+  transition: box-shadow 0.2s;
+}
+.dashboard-card-title {
+  font-size: 15px;
+  color: #888;
+  font-weight: 600;
+  margin-bottom: 0;
+}
+.dashboard-card-title-primary { color: #1976d2; }
+.dashboard-card-title-success { color: #43a047; }
+.dashboard-card-title-warning { color: #ff9800; }
+.dashboard-card-title-purple { color: #8e24aa; }
+.dashboard-card-title-info { color: #00bcd4; }
+.dashboard-card-title-danger { color: #d84315; }
+.dashboard-card-value {
+  font-size: 2em;
+  font-weight: bold;
+}
+.dashboard-card-value-primary { color: #00c6ff; }
+.dashboard-card-value-danger { color: #ff4e50; }
+.dashboard-card-value-success { color: #00b894; }
+.dashboard-card-value-warning { color: #fbc531; }
+.dashboard-card-value-orange { color: #fd9644; }
+.dashboard-card-value-purple { color: #6c5ce7; }
+.dashboard-card-icon {
+  position: absolute;
+  top: 18px;
+  right: 18px;
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.dashboard-card-icon-money { background: linear-gradient(135deg,#00c6ff,#0072ff); }
+.dashboard-card-icon-arrow { background: linear-gradient(135deg,#ff4e50,#f9d423); }
+.dashboard-card-icon-credit { background: linear-gradient(135deg,#00b894,#00cec9); }
+.dashboard-card-icon-balance { background: linear-gradient(135deg,#fbc531,#f7971e); }
+.dashboard-card-icon-line { background: linear-gradient(135deg,#fd9644,#f7971e); }
+.dashboard-card-icon-calendar { background: linear-gradient(135deg,#6c5ce7,#a29bfe); }
+.dashboard-card-icon-users { background: linear-gradient(135deg,#1976d2,#64b5f6); }
+.dashboard-card-icon-envelope { background: linear-gradient(135deg,#43a047,#a5d6a7); }
+.dashboard-card-icon-list { background: linear-gradient(135deg,#8e24aa,#ce93d8); }
+.dashboard-card-icon-bullseye { background: linear-gradient(135deg,#00bcd4,#b2ebf2); }
+.dashboard-card-icon-cogs { background: linear-gradient(135deg,#d84315,#ffab91); }
+.dashboard-card-icon-budget { background: linear-gradient(135deg,#ff9800,#ffe0b2); }
+
+.dashboard-card-icon i {
+  color: #fff;
+  font-size: 20px;
+}
+
+.dashboard-card-link {
+  text-decoration: none;
+}
+
+/* Utility classes for text */
+.text-center { text-align: center; }
+.text-primary { color: #1976d2; }
+.text-success { color: #43a047; }
+.text-warning { color: #ff9800; }
+.text-purple { color: #8e24aa; }
+.text-info { color: #00bcd4; }
+.text-danger { color: #d84315; }
+.text-muted { color: #888; }
+.text-small { font-size: 13px; }
+.text-xsmall { font-size: 10px; }
+.font-bold { font-weight: bold; }
+.font-semibold { font-weight: 600; }
+
+/* Margin and padding helpers */
+.mb-0 { margin-bottom: 0 !important; }
+.mb-8 { margin-bottom: 8px !important; }
+.mt-4 { margin-top: 4px !important; }
+.mt-10 { margin-top: 10px !important; }
+.mt-16 { margin-top: 16px !important; }
+.mt-24 { margin-top: 24px !important; } 

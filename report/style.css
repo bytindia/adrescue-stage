@@ -1,0 +1,92 @@
+
+.table-scroll {
+	position:relative;
+	margin:auto;
+	overflow:hidden;
+	
+}
+.table-wrap {
+	width:100%;
+	overflow:auto;
+}
+.table-scroll table {
+	width:100%;
+	margin:auto;
+	border-collapse:separate;
+	border-spacing:0;
+}
+.table-scroll th, .table-scroll td {
+	padding:5px 10px;
+	border:1px solid #dddddd;
+	white-space:nowrap;
+	vertical-align:top;
+}
+.table-scroll thead, .table-scroll tfoot {
+	background:#f9f9f9;
+}
+.clone {
+	position:absolute;
+	top:0;
+	left:0;
+	pointer-events:none;
+}
+.clone th, .clone td {
+	visibility:hidden
+}
+.clone td, .clone th {
+	border-color:transparent
+}
+.clone tbody th {
+	visibility:visible;
+	color:red;
+}
+.clone .fixed-side {
+	border:1px solid #dddddd;
+  background: #f9f9f9;
+	visibility:visible;
+  font-weight: bold;
+  text-align:left;
+}
+tbody td {
+    text-align: right;
+}
+.clone thead, .clone tfoot{background:transparent;}
+
+.txt_red { color:red; font-weight:bold; }
+.txt_green { color:#74d350; font-weight:bold; }
+thead th {
+    text-align: center !important;
+}
+table .fa { font-size: 15px; color: #b5b7be; cursor: pointer; }
+table .fa-wa { color: #4db628; font-weight: bold; }
+.wa_msg { font-weight: bold; }
+h3, h4 { text-align:center; }
+.percent {     color: #2d89d7;  font-size: 12px; font-style: italic; }
+.bg_green { background-color: #99df99; }
+th:first-child, td:first-child
+{
+  position:sticky;
+  left:0px;
+  
+}
+.table-scroll tfoot { background-color: #c9eaf7; }
+
+.font-italic b, strong {
+    font-weight: 700;
+    color: #13a911;
+    font-size: 13px;
+}
+
+a.btn {
+    margin: 5px 0;
+}
+.float-right { float:right; }
+th, td {
+    vertical-align: middle !important;
+}
+.adrescue_logo { float: left; height: 100px; margin-left: 15%; }
+@media (min-width: 100px) and (max-width: 480px){
+            .adrescue_logo {
+                display: none !important;
+            }
+        }

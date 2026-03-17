@@ -1,0 +1,47 @@
+<!DOCTYPE html> 
+<html lang="en"> 
+  
+<head> 
+    <meta charset="utf-8" /> 
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0" /> 
+    <meta http-equiv="X-UA-Compatible" content="ie=edge" /> 
+    <title>Loading...</title> 
+    <link href="vendors/bootstrap/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link href="vendors/font-awesome/css/font-awesome.min.css" rel="stylesheet">
+</head> 
+<style>
+.container .jumbotron, .container-fluid .jumbotron { margin-top:100px; background:#fff; } 
+.display-3 { font-size:28px; margin-top:50px; }
+</style>
+<script>
+function updateLoading(min_v, max_v) {
+	//alert();
+	var inc = min_v;
+    myVar = setTimeout(function() {  inc = inc+1; document.getElementById("loading").innerHTML = ""+inc+"";  }, 100);
+   //myVar = setTimeout(function(){ alert("Hello"); }, 3000);
+}
+function myStopFunction() {
+  clearTimeout(myVar);
+}
+</script>
+<body> 
+
+    
+<div class="container h-100 d-flex justify-content-center text-center">
+
+    <div class="jumbotron my-auto">
+      <div class="text-center">
+                <a><img src="images/logo-350.png" alt="AdRescue" ></a>
+      </div>
+	  <H3>Loading... <br><br><span id="loading">0</span>% Completed!</H3>
+      <h2 class="display-3">  Don't Refresh or Close the Page.... This will take 2 minutes</h2>
+
+    </div>
+
+ </div>  
+
+</body> 
+  
+</html> 

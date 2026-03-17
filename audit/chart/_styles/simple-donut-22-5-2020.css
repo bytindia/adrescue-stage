@@ -1,0 +1,210 @@
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
+html,body{
+	font-size:1em;
+	padding:0px;
+	margin:0px;
+	background-color:#fff;
+	font-family: 'Poppins', sans-serif;
+}
+img{
+		max-width:100%;
+}
+.chart_wrapper{
+	max-width:600px;
+	margin:0px auto;
+	padding:0px 30px;
+}
+.chart_wrapper>div{
+	background-color:#0471d1;
+	max-width:300px;
+	padding:3rem 0rem 0rem 0rem;
+	margin:0px auto;
+}
+.profile img{
+ max-width:200px;
+ border:2px solid #000;
+ border-radius:50%;
+}
+.profile{
+	margin-top:2rem;
+}
+.pie-wrapper {
+  position: relative;
+  width: 500px;
+  height: 500px;
+  margin: 0px auto;
+  left: -100px;
+}
+.pie-wrapper .shadow,.pie-wrapper .pie {
+	font-size:38em;
+}
+.profile h3{
+	font-size:1.3rem;
+	font-weight:500;
+	color:#000;
+	margin-top:-0.5rem;
+}
+.inner-pie h5{
+	font-weight:normal;
+	font-size:2.5rem;
+	margin-top:1rem;
+	font-weight:normal;
+	color:#000;
+}
+.pie-wrapper .pie {
+  position: absolute;
+  top: 0px;
+  left: 0px;
+  width: 100%;
+  height: 100%;
+  clip: rect(0, 500px, 500px, 250px);
+}
+
+.pie-wrapper .half-circle {
+  position: absolute;
+  top: 0px;
+  left: 0px;
+  width: 100%;
+  height: 100%;
+  border: 0.8em solid #d91e2e;
+  border-radius: 50%;
+  clip: rect(0px, 250px, 500px, 0px);
+}
+
+.pie-wrapper .right-side {
+  transform: rotate(0deg);
+}
+
+.pie-wrapper .label {
+  position: absolute;
+  top: 0.52em;
+  right: 0.4em;
+  bottom: 0.4em;
+  left: 0.4em;
+  display: block;
+  background: none;
+  border-radius: 50%;
+  color: #7F8C8D;
+  font-size: 0.25em;
+  text-align: center;
+  cursor: default;
+  z-index: 2;
+}
+
+.pie-wrapper .smaller {
+  padding-bottom: 20px;
+  color: #BDC3C7;
+  font-size: .45em;
+  vertical-align: super;
+}
+
+.pie-wrapper .shadow {
+  width: 100%;
+  height: 100%;
+  border: 0.1em solid #BDC3C7;
+  border-radius: 50%;
+  background: #fff;
+}
+
+.pie-wrapper .score{
+	font-size:4rem;
+	color:#000;
+	margin-top:2rem;
+	font-weight:bold;
+}
+.pie-wrapper .score>span{
+	font-size:3rem;
+
+}
+.bottom-text{
+	text-transform:uppercase;
+	text-align:center;
+	margin-top:2rem;
+	width:500px;
+	left:-100px;
+	position:relative;
+	border:0.3rem solid #fff;
+	border-radius:90px;
+	color:#fff;
+	background-color:#0583f2;
+	padding:1rem;
+	box-shadow:0px 0px 1.5rem #444;
+}
+.bottom-text h3,.bottom-text p{
+	margin:0px;
+	color:#fff;
+}
+.bottom-text h3{font-weight:600;font-size:2rem;}
+.bottom-text p{font-size:1.5rem;}
+.footer{
+	position:relative;
+	margin-top:5rem;
+	text-align:center;
+}
+.footer img{
+	max-width: 190px;
+    margin: 0px auto;
+    position: relative;
+    z-index: 2;
+	left:5px;
+}
+.footer:after {
+	bottom: 0%;
+	left:30px;
+	border: solid transparent;
+	content: " ";
+	height: 0;
+	width: 0;
+	position: absolute;
+	pointer-events: none;
+	border-color: rgba(255, 255, 213, 0);
+	border-bottom-color: #fff;
+	border-width: 150px;
+	margin-left: -30px;
+}
+@media all and (max-width:767px)
+{
+	.chart_wrapper{
+	max-width:310px;
+}
+.chart_wrapper>div{
+	max-width:240px;
+}
+.profile img{
+	max-width:100px;
+}
+.pie-wrapper,.bottom-text {
+	left: -30px;
+	width:290px;
+	height:290px;
+}
+
+.bottom-text{height:auto;}
+.inner-pie h5{
+	font-size: 1.5rem;
+    margin-top: 0.5rem;
+}
+.profile{
+	margin-top:-0em;
+}
+.profile h3{
+	margin-top:-1em;
+	font-size: 1.2rem;
+}
+.pie-wrapper .score {
+    font-size: 2rem;
+    margin-top: 0.5rem;
+}
+.pie-wrapper .score>span{
+	font-size: 1.6rem;
+}
+.footer:after{
+	border-width: 125px;
+}
+.pie-wrapper .pie {
+  clip: rect(0, 290px, 290px, 145px);
+}
+.pie-wrapper .half-circle {
+  clip: rect(0px, 145px, 290px, 0px);
+}
+}
