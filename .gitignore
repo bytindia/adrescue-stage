@@ -56,5 +56,3 @@ fb-ads/demo/
 adrescue-stage/
 *.bundle
 
-# ── Build / cache ─────────────────────────────────────────────────────────────
-build/
