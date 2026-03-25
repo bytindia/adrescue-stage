@@ -175,6 +175,7 @@ while ($r = mysqli_fetch_assoc($lRes)) $lp_leads[] = $r;
 // ─── CRM Maps (latest status) ─────────────────────────────────────────────────
 $crm_map_by_id    = [];
 $crm_map_by_phone = [];
+$phone_to_crm_lid = []; // phone last-10 => crm lead_id (for history lookup)
 $crmRes = mysqli_query($conn,
     "SELECT c.lead_id, c.phone,
             (SELECT h.new_status FROM vrx_crm_lead_status_history h
@@ -187,8 +188,34 @@ while ($r = mysqli_fetch_assoc($crmRes)) {
     $crm_map_by_id[trim($r['lead_id'])] = $r['latest_status'];
     if (!empty($r['phone'])) {
         $ph = substr(preg_replace('/\D/', '', $r['phone']), -10);
-        if (strlen($ph) === 10) $crm_map_by_phone[$ph] = $r['latest_status'];
+        if (strlen($ph) === 10) {
+            $crm_map_by_phone[$ph]  = $r['latest_status'];
+            $phone_to_crm_lid[$ph]  = trim($r['lead_id']);
+        }
     }
+}
+
+// ─── AJAX: Lead History endpoint ──────────────────────────────────────────────
+if (isset($_GET['ajax_history'])) {
+    header('Content-Type: application/json');
+    $lead_id = trim($_GET['lead_id'] ?? '');
+    $phone   = trim($_GET['phone']   ?? '');
+    $lid     = '';
+    if ($lead_id !== '') {
+        $lid = mysqli_real_escape_string($conn, $lead_id);
+    } elseif ($phone !== '') {
+        $ph10 = substr(preg_replace('/\D/', '', $phone), -10);
+        if (strlen($ph10) === 10 && isset($phone_to_crm_lid[$ph10]))
+            $lid = mysqli_real_escape_string($conn, $phone_to_crm_lid[$ph10]);
+    }
+    $history = [];
+    if ($lid !== '') {
+        $hRes = mysqli_query($conn,
+            "SELECT * FROM vrx_crm_lead_status_history WHERE lead_id = '$lid' ORDER BY id ASC");
+        if ($hRes) while ($hRow = mysqli_fetch_assoc($hRes)) $history[] = $hRow;
+    }
+    echo json_encode(['history' => $history, 'lead_id' => $lid]);
+    exit();
 }
 
 // ─── "Ever Working/Workable" history map ─────────────────────────────────────
@@ -217,6 +244,28 @@ function getCrmFeedbackById(string $lead_id, array &$map): string {
 function getCrmFeedbackByPhone(string $phone, array &$map): string {
     $ph = substr(preg_replace('/\D/', '', $phone), -10);
     return (strlen($ph) === 10 && isset($map[$ph])) ? $map[$ph] : '';
+}
+function categorizeCrmStatus(string $status): string {
+    $s = strtolower(trim($status));
+    if ($s === '') return 'no_feedback';
+    if (str_contains($s, 'working') || str_contains($s, 'workable')) return 'working';
+    if (str_contains($s, 'call back') || str_contains($s, 'callback')) return 'callback';
+    if (str_contains($s, 'rnr')) return 'rnr';
+    if (str_contains($s, 'non qualified') || str_contains($s, 'not interested')) return 'non_qualified';
+    if (str_contains($s, 'unqualified') || str_contains($s, 'duplicate') || str_contains($s, 'invalid')) return 'unqualified';
+    return 'no_feedback';
+}
+function indianNumber(int $n): string {
+    if ($n < 0) return '-' . indianNumber(-$n);
+    $s = (string)$n;
+    $len = strlen($s);
+    if ($len <= 3) return $s;
+    $last3 = substr($s, -3);
+    $rest  = substr($s, 0, $len - 3);
+    $parts = [];
+    while (strlen($rest) > 2) { $parts[] = substr($rest, -2); $rest = substr($rest, 0, -2); }
+    if ($rest !== '') $parts[] = $rest;
+    return implode(',', array_reverse($parts)) . ',' . $last3;
 }
 function feedbackBadge(string $f): string {
     if ($f === '') return "<span class='badge bg-secondary'>No Feedback</span>";
@@ -268,6 +317,7 @@ foreach ($meta_leads as $lead) {
 // LP
 $l_total = count($lp_leads);
 $l_today = $l_yest = $l_week = $l_wl = $l_nofb = 0;
+$l_rnr = $l_callback = $l_nq = $l_working = 0;
 foreach ($lp_leads as $lead) {
     $dt = substr($lead['lead_date'], 0, 10);
     if ($dt === $today_dt)     $l_today++;
@@ -277,6 +327,23 @@ foreach ($lp_leads as $lead) {
     $fb  = !empty($lid) ? strtolower(trim($crm_map_by_id[$lid] ?? '')) : '';
     if ($fb === '')              $l_nofb++;
     if (in_array($fb, $wl_statuses)) $l_wl++;
+    $cat = categorizeCrmStatus($fb);
+    if ($cat === 'rnr')           $l_rnr++;
+    if ($cat === 'callback')      $l_callback++;
+    if ($cat === 'non_qualified') $l_nq++;
+    if ($cat === 'working')       $l_working++;
+}
+
+// Meta feedback counts
+$m_rnr = $m_callback = $m_nq = $m_working = 0;
+foreach ($meta_leads as $lead) {
+    $ph  = substr(preg_replace('/\D/', '', $lead['phone'] ?? ''), -10);
+    $fb  = strlen($ph) === 10 ? strtolower(trim($crm_map_by_phone[$ph] ?? '')) : '';
+    $cat = categorizeCrmStatus($fb);
+    if ($cat === 'rnr')           $m_rnr++;
+    if ($cat === 'callback')      $m_callback++;
+    if ($cat === 'non_qualified') $m_nq++;
+    if ($cat === 'working')       $m_working++;
 }
 
 // ─── AI cache: load already-analysed results from DB (fast, no API call) ─────
@@ -412,31 +479,40 @@ $vrx_active_page = 'leads';
         <!-- ══ META LEADS TAB ══ -->
         <div class="tab-pane fade show active" id="tabMeta" role="tabpanel">
 
+            <!-- Feedback count chips -->
+            <div style="padding:10px 16px 4px;display:flex;flex-wrap:wrap;gap:6px;font-size:0.75rem;">
+                <span class="badge bg-success">Working – <?= indianNumber($m_working) ?></span>
+                <span class="badge bg-warning text-dark">Callback – <?= indianNumber($m_callback) ?></span>
+                <span class="badge bg-secondary">RNR – <?= indianNumber($m_rnr) ?></span>
+                <span class="badge bg-danger">Not Qualified – <?= indianNumber($m_nq) ?></span>
+                <span class="badge bg-dark">No Feedback – <?= indianNumber($m_nofb) ?></span>
+            </div>
+
             <!-- Summary cards -->
             <div class="summary-cards">
                 <div class="s-card">
                     <div class="s-label">Total</div>
-                    <div class="s-val"><?= $m_total ?></div>
+                    <div class="s-val"><?= indianNumber($m_total) ?></div>
                 </div>
                 <div class="s-card c-wl">
-                    <div class="s-label">WL</div>
-                    <div class="s-val"><?= $m_wl ?></div>
+                    <div class="s-label">Workable</div>
+                    <div class="s-val"><?= indianNumber($m_wl) ?></div>
                 </div>
                 <div class="s-card c-nofb">
                     <div class="s-label">No Feedback</div>
-                    <div class="s-val"><?= $m_nofb ?></div>
+                    <div class="s-val"><?= indianNumber($m_nofb) ?></div>
                 </div>
                 <div class="s-card c-today">
                     <div class="s-label">Today</div>
-                    <div class="s-val"><?= $m_today ?></div>
+                    <div class="s-val"><?= indianNumber($m_today) ?></div>
                 </div>
                 <div class="s-card">
                     <div class="s-label">Yesterday</div>
-                    <div class="s-val"><?= $m_yest ?></div>
+                    <div class="s-val"><?= indianNumber($m_yest) ?></div>
                 </div>
                 <div class="s-card">
                     <div class="s-label">This Week</div>
-                    <div class="s-val"><?= $m_week ?></div>
+                    <div class="s-val"><?= indianNumber($m_week) ?></div>
                 </div>
             </div>
 
@@ -454,6 +530,7 @@ $vrx_active_page = 'leads';
                             <th>Date</th>
                             <th>Custom Questions</th>
                             <th>CRM Feedback</th>
+                            <th class="text-center">History</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -511,10 +588,18 @@ $vrx_active_page = 'leads';
                             <?php if ($everWk): ?><span class="wl-dot" title="Was Working/Workable in history"></span><?php endif; ?>
                             <?= feedbackBadge($fb) ?>
                         </td>
+                        <td class="text-center">
+                            <button class="btn btn-sm btn-outline-secondary py-0 px-2 btn-history"
+                                    data-phone="<?= htmlspecialchars($ph_raw, ENT_QUOTES) ?>"
+                                    data-name="<?= htmlspecialchars($lead['name'] ?? '', ENT_QUOTES) ?>"
+                                    title="View status history" style="font-size:0.8rem;">
+                                🕐
+                            </button>
+                        </td>
                     </tr>
                     <?php endforeach; ?>
                     <?php if (empty($meta_leads)): ?>
-                    <tr><td colspan="9" class="text-center text-muted py-3">No Meta leads in this period.</td></tr>
+                    <tr><td colspan="10" class="text-center text-muted py-3">No Meta leads in this period.</td></tr>
                     <?php endif; ?>
                     </tbody>
                 </table>
@@ -524,31 +609,40 @@ $vrx_active_page = 'leads';
         <!-- ══ GOOGLE / LP LEADS TAB ══ -->
         <div class="tab-pane fade" id="tabGoogle" role="tabpanel">
 
+            <!-- Feedback count chips -->
+            <div style="padding:10px 16px 4px;display:flex;flex-wrap:wrap;gap:6px;font-size:0.75rem;">
+                <span class="badge bg-success">Working – <?= indianNumber($l_working) ?></span>
+                <span class="badge bg-warning text-dark">Callback – <?= indianNumber($l_callback) ?></span>
+                <span class="badge bg-secondary">RNR – <?= indianNumber($l_rnr) ?></span>
+                <span class="badge bg-danger">Not Qualified – <?= indianNumber($l_nq) ?></span>
+                <span class="badge bg-dark">No Feedback – <?= indianNumber($l_nofb) ?></span>
+            </div>
+
             <!-- Summary cards -->
             <div class="summary-cards">
                 <div class="s-card">
                     <div class="s-label">Total</div>
-                    <div class="s-val"><?= $l_total ?></div>
+                    <div class="s-val"><?= indianNumber($l_total) ?></div>
                 </div>
                 <div class="s-card c-wl">
-                    <div class="s-label">WL</div>
-                    <div class="s-val"><?= $l_wl ?></div>
+                    <div class="s-label">Workable</div>
+                    <div class="s-val"><?= indianNumber($l_wl) ?></div>
                 </div>
                 <div class="s-card c-nofb">
                     <div class="s-label">No Feedback</div>
-                    <div class="s-val"><?= $l_nofb ?></div>
+                    <div class="s-val"><?= indianNumber($l_nofb) ?></div>
                 </div>
                 <div class="s-card c-today">
                     <div class="s-label">Today</div>
-                    <div class="s-val"><?= $l_today ?></div>
+                    <div class="s-val"><?= indianNumber($l_today) ?></div>
                 </div>
                 <div class="s-card">
                     <div class="s-label">Yesterday</div>
-                    <div class="s-val"><?= $l_yest ?></div>
+                    <div class="s-val"><?= indianNumber($l_yest) ?></div>
                 </div>
                 <div class="s-card">
                     <div class="s-label">This Week</div>
-                    <div class="s-val"><?= $l_week ?></div>
+                    <div class="s-val"><?= indianNumber($l_week) ?></div>
                 </div>
             </div>
 
@@ -565,6 +659,7 @@ $vrx_active_page = 'leads';
                             <th>Source</th>
                             <th>Date</th>
                             <th>CRM Feedback</th>
+                            <th class="text-center">History</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -587,10 +682,18 @@ $vrx_active_page = 'leads';
                             <?php if ($everWk): ?><span class="wl-dot" title="Was Working/Workable in history"></span><?php endif; ?>
                             <?= feedbackBadge($fb) ?>
                         </td>
+                        <td class="text-center">
+                            <button class="btn btn-sm btn-outline-secondary py-0 px-2 btn-history"
+                                    data-lead-id="<?= htmlspecialchars($lid, ENT_QUOTES) ?>"
+                                    data-name="<?= htmlspecialchars($lead['name'] ?? '', ENT_QUOTES) ?>"
+                                    title="View status history" style="font-size:0.8rem;">
+                                🕐
+                            </button>
+                        </td>
                     </tr>
                     <?php endforeach; ?>
                     <?php if (empty($lp_leads)): ?>
-                    <tr><td colspan="8" class="text-center text-muted py-3">No LP/Google leads in this period.</td></tr>
+                    <tr><td colspan="9" class="text-center text-muted py-3">No LP/Google leads in this period.</td></tr>
                     <?php endif; ?>
                     </tbody>
                 </table>
@@ -599,6 +702,21 @@ $vrx_active_page = 'leads';
 
     </div><!-- /tab-content -->
 
+</div>
+
+<!-- ── Lead History Modal ── -->
+<div class="modal fade" id="historyModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered modal-sm">
+        <div class="modal-content" style="border-radius:14px;overflow:hidden;">
+            <div class="modal-header" style="background:linear-gradient(135deg,#0f2044,#1a3a6e);padding:12px 16px;">
+                <h6 class="modal-title text-white mb-0">🕐 Status History</h6>
+                <button type="button" class="btn-close btn-close-white btn-sm" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" style="padding:14px 16px;" id="historyModalBody">
+                <div class="text-center text-muted py-3"><span class="spinner-border spinner-border-sm me-2"></span>Loading…</div>
+            </div>
+        </div>
+    </div>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
@@ -610,19 +728,58 @@ $(function() {
     var tblMeta = $('#tblMeta').DataTable({
         order: [[6, 'desc']],
         pageLength: 25,
+        columnDefs: [{ orderable: false, targets: [9] }],
         language: { search: 'Search:', lengthMenu: 'Show _MENU_' }
     });
 
     $('#tblLP').DataTable({
         order: [[6, 'desc']],
         pageLength: 25,
-        columnDefs: [{ orderable: false, targets: [7] }],
+        columnDefs: [{ orderable: false, targets: [7, 8] }],
         language: { search: 'Search:', lengthMenu: 'Show _MENU_' }
     });
 
     // Re-adjust when switching tabs
     $('button[data-bs-toggle="tab"]').on('shown.bs.tab', function() {
         $.fn.dataTable.tables({ visible: true, api: true }).columns.adjust();
+    });
+
+    // ── Lead History Modal ─────────────────────────────────────────────────────
+    var $historyModal = new bootstrap.Modal(document.getElementById('historyModal'));
+
+    $(document).on('click', '.btn-history', function() {
+        var leadId = $(this).data('lead-id') || '';
+        var phone  = $(this).data('phone')   || '';
+        var name   = $(this).data('name')    || 'Lead';
+        $('#historyModal .modal-title').text('🕐 ' + name);
+        $('#historyModalBody').html('<div class="text-center text-muted py-3"><span class="spinner-border spinner-border-sm me-2"></span>Loading…</div>');
+        $historyModal.show();
+
+        var params = leadId ? 'ajax_history=1&lead_id=' + encodeURIComponent(leadId)
+                            : 'ajax_history=1&phone='   + encodeURIComponent(phone);
+        $.getJSON('?' + params, function(data) {
+            var hist = data.history || [];
+            if (hist.length === 0) {
+                $('#historyModalBody').html('<p class="text-muted text-center small py-2">No history found.</p>');
+                return;
+            }
+            var html = '<div style="font-size:0.82rem;">';
+            $.each(hist, function(i, h) {
+                var arrow = h.old_status
+                    ? '<span class="text-muted">' + h.old_status + '</span> → <strong>' + h.new_status + '</strong>'
+                    : '<strong>' + h.new_status + '</strong>';
+                var dt = h.changed_at || h.created_at || h.date || '';
+                var dtStr = dt ? '<small class="text-muted ms-1" style="font-size:0.72rem;">' + dt + '</small>' : '';
+                html += '<div class="d-flex align-items-start gap-2 mb-2">';
+                html += '<span class="badge rounded-pill bg-light text-dark border" style="min-width:22px;font-size:0.7rem;">' + (i+1) + '</span>';
+                html += '<div>' + arrow + dtStr + '</div>';
+                html += '</div>';
+            });
+            html += '</div>';
+            $('#historyModalBody').html(html);
+        }).fail(function() {
+            $('#historyModalBody').html('<p class="text-danger text-center small py-2">Failed to load history.</p>');
+        });
     });
 
     // ── AI Lead Analysis (async, runs after page load) ──────────────────────

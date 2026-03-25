@@ -82,8 +82,9 @@ foreach ($fb_ids as $fb_id) {
 }
 
 // ─── Google Ads API ───────────────────────────────────────────────────────────
-$google_spend = 0.0;
-$google_leads = 0;
+$google_spend     = 0.0;
+$google_leads     = 0;
+$google_campaigns = [];
 if (!empty($g_ids) && !empty($g_refresh_token) && $g_mcc) {
     try {
         $g_data = GetCampaignsFromMultipleAccounts::main($g_refresh_token, $g_mcc, $g_ids, $dtRange1, $dtRange2, '');
@@ -91,6 +92,7 @@ if (!empty($g_ids) && !empty($g_refresh_token) && $g_mcc) {
             foreach ($g_data as $camp) {
                 $google_spend += (float)($camp['cost'] ?? 0);
                 $google_leads += (int)($camp['conv'] ?? 0);
+                $google_campaigns[] = $camp;
             }
         }
     } catch (Throwable $e) { /* silently continue */ }
@@ -128,6 +130,7 @@ $wl_statuses_raw = ['working', 'workable'];
 // Map 2: phone last-10 → latest status — used for Meta leads matched via phone
 $crm_map_by_id    = []; // ['00Qe200000...' => 'interested']
 $crm_map_by_phone = []; // ['9876543210'    => 'non qualified']
+$phone_to_lid     = []; // ['9876543210'    => 'crm_lead_id']
 
 $crmQ = mysqli_query($conn,
     "SELECT c.lead_id, c.phone,
@@ -144,7 +147,10 @@ while ($r = mysqli_fetch_assoc($crmQ)) {
     // Map 2 — by phone last 10 digits (for Meta via phone)
     if (!empty($r['phone'])) {
         $ph = substr(preg_replace('/\D/', '', $r['phone']), -10);
-        if (strlen($ph) === 10) $crm_map_by_phone[$ph] = $status;
+        if (strlen($ph) === 10) {
+            $crm_map_by_phone[$ph] = $status;
+            $phone_to_lid[$ph]     = trim($r['lead_id']);
+        }
     }
 }
 
@@ -207,13 +213,15 @@ $daily_table = []; // ['Y-m-d' => ['leads'=>int,'wl'=>int,'spend'=>float]]
 // LP leads by date
 $r = mysqli_query($conn, "SELECT DATE(created_at) AS dt, COUNT(*) AS cnt FROM vrx_leads_lp WHERE DATE(created_at) BETWEEN '{$dtRange1}' AND '{$dtRange2}' GROUP BY DATE(created_at)");
 while ($row = mysqli_fetch_assoc($r)) {
-    $daily_table[$row['dt']]['leads'] = ($daily_table[$row['dt']]['leads'] ?? 0) + (int)$row['cnt'];
+    $daily_table[$row['dt']]['leads']    = ($daily_table[$row['dt']]['leads']    ?? 0) + (int)$row['cnt'];
+    $daily_table[$row['dt']]['lp_leads'] = ($daily_table[$row['dt']]['lp_leads'] ?? 0) + (int)$row['cnt'];
 }
 
 // Meta leads by date
 $r = mysqli_query($conn, "SELECT DATE(created) AS dt, COUNT(*) AS cnt FROM vrx_leads_meta WHERE DATE(created) BETWEEN '{$dtRange1}' AND '{$dtRange2}' GROUP BY DATE(created)");
 while ($row = mysqli_fetch_assoc($r)) {
-    $daily_table[$row['dt']]['leads'] = ($daily_table[$row['dt']]['leads'] ?? 0) + (int)$row['cnt'];
+    $daily_table[$row['dt']]['leads']      = ($daily_table[$row['dt']]['leads']      ?? 0) + (int)$row['cnt'];
+    $daily_table[$row['dt']]['meta_leads'] = ($daily_table[$row['dt']]['meta_leads'] ?? 0) + (int)$row['cnt'];
 }
 
 // WL by date — LP via api_res, Meta via phone last 10 digits
@@ -246,9 +254,11 @@ foreach ($api_daily as $dt => $d) {
 
 // Ensure defaults and sort newest first
 foreach ($daily_table as $dt => &$d) {
-    $d['leads'] = $d['leads'] ?? 0;
-    $d['wl']    = $d['wl']    ?? 0;
-    $d['spend'] = $d['spend'] ?? 0.0;
+    $d['leads']      = $d['leads']      ?? 0;
+    $d['meta_leads'] = $d['meta_leads'] ?? 0;
+    $d['lp_leads']   = $d['lp_leads']   ?? 0;
+    $d['wl']         = $d['wl']         ?? 0;
+    $d['spend']      = $d['spend']       ?? 0.0;
 }
 unset($d);
 krsort($daily_table);
@@ -293,6 +303,80 @@ while ($row = mysqli_fetch_assoc($r)) {
     }
 }
 arsort($status_counts);
+
+// ─── Period status breakdown for extra cards ───────────────────────────────
+$period_rnr      = 0;
+$period_callback = 0;
+$period_nq       = 0;
+foreach ($status_counts as $st => $cnt) {
+    $cat = categorizeCrmStatus($st);
+    if ($cat === 'rnr')           $period_rnr      += $cnt;
+    if ($cat === 'callback')      $period_callback += $cnt;
+    if ($cat === 'non_qualified') $period_nq       += $cnt;
+}
+
+// ─── CRM Tooltip data: history totals + NQ prev-status breakdown ─────────────
+$crm_history_totals = [];
+$nq_from_prev       = [];
+
+$_period_lids = [];
+// LP leads: api_res = CRM lead_id
+$_r = mysqli_query($conn,
+    "SELECT api_res FROM vrx_leads_lp
+     WHERE DATE(created_at) BETWEEN '{$dtRange1}' AND '{$dtRange2}'
+       AND api_res IS NOT NULL AND api_res != ''");
+if ($_r) while ($_row = mysqli_fetch_assoc($_r)) $_period_lids[] = trim($_row['api_res']);
+// Meta leads: phone → CRM lead_id
+$_r = mysqli_query($conn,
+    "SELECT phone FROM vrx_leads_meta
+     WHERE DATE(created) BETWEEN '{$dtRange1}' AND '{$dtRange2}'
+       AND phone IS NOT NULL AND phone != ''");
+if ($_r) {
+    while ($_row = mysqli_fetch_assoc($_r)) {
+        $ph = substr(preg_replace('/\D/', '', $_row['phone']), -10);
+        if (strlen($ph) === 10 && isset($phone_to_lid[$ph]))
+            $_period_lids[] = $phone_to_lid[$ph];
+    }
+}
+$_period_lids = array_values(array_unique(array_filter($_period_lids)));
+
+if (!empty($_period_lids)) {
+    $_lid_str = "'" . implode("','", array_map(fn($l) => mysqli_real_escape_string($conn, $l), $_period_lids)) . "'";
+    // Total history count per status category
+    $_r = mysqli_query($conn,
+        "SELECT LOWER(new_status) AS st, COUNT(*) AS cnt
+         FROM vrx_crm_lead_status_history WHERE lead_id IN ($_lid_str)
+         GROUP BY LOWER(new_status)");
+    if ($_r) while ($_row = mysqli_fetch_assoc($_r)) {
+        $cat = categorizeCrmStatus($_row['st']);
+        $crm_history_totals[$cat] = ($crm_history_totals[$cat] ?? 0) + (int)$_row['cnt'];
+    }
+    // NQ leads: find their previous status before NQ
+    $_nq_lids = array_filter($_period_lids,
+        fn($l) => isset($crm_map_by_id[$l]) && categorizeCrmStatus($crm_map_by_id[$l]) === 'non_qualified');
+    if (!empty($_nq_lids)) {
+        $_nq_str = "'" . implode("','", array_map(fn($l) => mysqli_real_escape_string($conn, $l), array_values($_nq_lids))) . "'";
+        $_nq_hist = [];
+        $_r = mysqli_query($conn,
+            "SELECT lead_id, LOWER(new_status) AS st FROM vrx_crm_lead_status_history
+             WHERE lead_id IN ($_nq_str) ORDER BY lead_id, id ASC");
+        if ($_r) while ($_row = mysqli_fetch_assoc($_r)) $_nq_hist[$_row['lead_id']][] = $_row['st'];
+        foreach ($_nq_hist as $lid => $hist) {
+            $n = count($hist);
+            for ($i = $n - 1; $i >= 0; $i--) {
+                if (categorizeCrmStatus($hist[$i]) === 'non_qualified') {
+                    if ($i > 0) {
+                        $cat = categorizeCrmStatus($hist[$i - 1]);
+                        if (!in_array($cat, ['non_qualified', 'no_feedback', 'unqualified']))
+                            $nq_from_prev[$cat] = ($nq_from_prev[$cat] ?? 0) + 1;
+                    }
+                    break;
+                }
+            }
+        }
+    }
+}
+
 foreach ($status_counts as $fb => $cnt) {
     $crm_data[] = ['lead_feedback' => $fb, 'cnt' => $cnt];
     $crm_total += $cnt;
@@ -490,7 +574,20 @@ while ($mRow = mysqli_fetch_assoc($rMtLeads)) {
 }
 
 // ─── Formatting ───────────────────────────────────────────────────────────────
-function fmtMoney(float $n): string { return '₹' . number_format((int)$n); }
+function indianNumber(int $n): string {
+    if ($n < 0) return '-' . indianNumber(-$n);
+    $s = (string)$n;
+    $len = strlen($s);
+    if ($len <= 3) return $s;
+    $last3 = substr($s, -3);
+    $rest  = substr($s, 0, $len - 3);
+    $parts = [];
+    while (strlen($rest) > 2) { $parts[] = substr($rest, -2); $rest = substr($rest, 0, -2); }
+    if ($rest !== '') $parts[] = $rest;
+    return implode(',', array_reverse($parts)) . ',' . $last3;
+}
+function fmtMoney(float $n): string { return '₹' . indianNumber((int)$n); }
+function fmtNum(int $n): string { return indianNumber($n); }
 function fmtDate(?string $d): string { return $d ? date('d M', strtotime($d)) : '–'; }
 function badgePlatform(string $p): string {
     $map = ['Meta' => 'bg-primary','LP' => 'bg-success','Google' => 'bg-warning text-dark'];
@@ -636,9 +733,25 @@ if ($r) { $row = mysqli_fetch_assoc($r); $meta_month_cnt = (int)$row['c']; }
             <?php endforeach; ?>
         </div>
         <small class="text-muted">
-            Meta: <strong class="text-primary"><?= fmtMoney($meta_spend) ?></strong> &nbsp;
-            Google: <strong class="text-success"><?= fmtMoney($google_spend) ?></strong>
+            FB: <strong class="text-primary"><?= fmtMoney($meta_spend) ?></strong> &nbsp;
+            G: <strong class="text-success"><?= fmtMoney($google_spend) ?></strong>
         </small>
+    </div>
+
+    <!-- ── TOTAL NO FEEDBACK BANNER ── -->
+    <?php $grand_nofb = $crm_no_feedback; ?>
+    <div class="row g-2 mb-3">
+        <div class="col-12 col-sm-auto">
+            <div class="card stat-card card-red" style="border-left:4px solid #b91c1c;">
+                <div class="card-body py-2 px-3 d-flex align-items-center gap-3">
+                    <div>
+                        <div class="stat-label mb-0" style="color:#b91c1c;">Total No Feedback</div>
+                        <div class="stat-value" style="color:#b91c1c;font-size:1.5rem;"><?= fmtNum($grand_nofb) ?></div>
+                    </div>
+                    <span class="fs-3 ms-2">🔕</span>
+                </div>
+            </div>
+        </div>
     </div>
 
     <!-- ══════════════════════════════════════════════════════════
@@ -646,7 +759,7 @@ if ($r) { $row = mysqli_fetch_assoc($r); $meta_month_cnt = (int)$row['c']; }
     ═══════════════════════════════════════════════════════════ -->
     <div class="section-title">📥 Leads by Period
         <span class="ms-2 text-muted fw-normal" style="font-size:0.68rem;">
-            Leads = DB total &nbsp;|&nbsp; <span style="color:#1a7a46;">WL</span> = Workable (CRM)
+            Leads = DB total &nbsp;|&nbsp; <span style="color:#1a7a46;">Workable</span> = Workable (CRM)
         </span>
     </div>
     <div class="row g-3 mb-4">
@@ -661,13 +774,13 @@ if ($r) { $row = mysqli_fetch_assoc($r); $meta_month_cnt = (int)$row['c']; }
                     </div>
                     <div class="val-wrap">
                         <div class="val-block">
-                            <div class="val-num"><?= $db_leads_today ?></div>
+                            <div class="val-num"><?= fmtNum($db_leads_today) ?></div>
                             <div class="val-sub">Leads</div>
                         </div>
                         <div class="val-divider"></div>
                         <div class="val-block">
-                            <div class="val-num wl-num"><?= $wl_today ?></div>
-                            <div class="val-sub wl-sub">WL</div>
+                            <div class="val-num wl-num"><?= fmtNum($wl_today) ?></div>
+                            <div class="val-sub wl-sub">Workable</div>
                         </div>
                     </div>
                 </div>
@@ -684,13 +797,13 @@ if ($r) { $row = mysqli_fetch_assoc($r); $meta_month_cnt = (int)$row['c']; }
                     </div>
                     <div class="val-wrap">
                         <div class="val-block">
-                            <div class="val-num"><?= $db_leads_yesterday ?></div>
+                            <div class="val-num"><?= fmtNum($db_leads_yesterday) ?></div>
                             <div class="val-sub">Leads</div>
                         </div>
                         <div class="val-divider"></div>
                         <div class="val-block">
-                            <div class="val-num wl-num"><?= $wl_yesterday ?></div>
-                            <div class="val-sub wl-sub">WL</div>
+                            <div class="val-num wl-num"><?= fmtNum($wl_yesterday) ?></div>
+                            <div class="val-sub wl-sub">Workable</div>
                         </div>
                     </div>
                 </div>
@@ -707,13 +820,13 @@ if ($r) { $row = mysqli_fetch_assoc($r); $meta_month_cnt = (int)$row['c']; }
                     </div>
                     <div class="val-wrap">
                         <div class="val-block">
-                            <div class="val-num"><?= $db_leads_thisweek ?></div>
+                            <div class="val-num"><?= fmtNum($db_leads_thisweek) ?></div>
                             <div class="val-sub">Leads</div>
                         </div>
                         <div class="val-divider"></div>
                         <div class="val-block">
-                            <div class="val-num wl-num"><?= $wl_thisweek ?></div>
-                            <div class="val-sub wl-sub">WL</div>
+                            <div class="val-num wl-num"><?= fmtNum($wl_thisweek) ?></div>
+                            <div class="val-sub wl-sub">Workable</div>
                         </div>
                     </div>
                 </div>
@@ -730,13 +843,13 @@ if ($r) { $row = mysqli_fetch_assoc($r); $meta_month_cnt = (int)$row['c']; }
                     </div>
                     <div class="val-wrap">
                         <div class="val-block">
-                            <div class="val-num"><?= $db_leads_lastweek ?></div>
+                            <div class="val-num"><?= fmtNum($db_leads_lastweek) ?></div>
                             <div class="val-sub">Leads</div>
                         </div>
                         <div class="val-divider"></div>
                         <div class="val-block">
-                            <div class="val-num wl-num"><?= $wl_lastweek ?></div>
-                            <div class="val-sub wl-sub">WL</div>
+                            <div class="val-num wl-num"><?= fmtNum($wl_lastweek) ?></div>
+                            <div class="val-sub wl-sub">Workable</div>
                         </div>
                     </div>
                 </div>
@@ -753,42 +866,72 @@ if ($r) { $row = mysqli_fetch_assoc($r); $meta_month_cnt = (int)$row['c']; }
                     </div>
                     <div class="val-wrap">
                         <div class="val-block">
-                            <div class="val-num"><?= $db_leads_thismonth ?></div>
+                            <div class="val-num"><?= fmtNum($db_leads_thismonth) ?></div>
                             <div class="val-sub">Leads</div>
                         </div>
                         <div class="val-divider"></div>
                         <div class="val-block">
-                            <div class="val-num wl-num"><?= $wl_thismonth ?></div>
-                            <div class="val-sub wl-sub">WL</div>
+                            <div class="val-num wl-num"><?= fmtNum($wl_thismonth) ?></div>
+                            <div class="val-sub wl-sub">Workable</div>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- Selected Period -->
+        <!-- Selected Period — label is the actual date range -->
         <div class="col-6 col-md-4 col-lg-2">
             <div class="card period-card stat-card card-purple">
                 <div class="card-body">
                     <div class="period-header">
-                        <span class="period-label">Selected</span>
-                        <span class="period-date"><?= htmlspecialchars($dt_label) ?></span>
+                        <span class="period-label" style="font-size:0.6rem;"><?= htmlspecialchars($dt_label) ?></span>
                     </div>
                     <div class="val-wrap">
                         <div class="val-block">
-                            <div class="val-num"><?= $db_leads_period ?></div>
+                            <div class="val-num"><?= fmtNum($db_leads_period) ?></div>
                             <div class="val-sub">Leads</div>
                         </div>
                         <div class="val-divider"></div>
                         <div class="val-block">
-                            <div class="val-num wl-num"><?= $wl_period ?></div>
-                            <div class="val-sub wl-sub">WL</div>
+                            <div class="val-num wl-num"><?= fmtNum($wl_period) ?></div>
+                            <div class="val-sub wl-sub">Workable</div>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
 
+    </div>
+
+    <!-- ── NOT QUALIFIED / RNR / CALLBACK extra cards ── -->
+    <div class="row g-3 mb-4">
+        <div class="col-6 col-md-4 col-lg-2">
+            <div class="card stat-card card-red">
+                <div class="card-body">
+                    <div class="stat-label">Not Qualified</div>
+                    <div class="stat-value"><?= fmtNum($period_nq) ?></div>
+                    <div class="stat-sub">Selected period</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-6 col-md-4 col-lg-2">
+            <div class="card stat-card card-slate">
+                <div class="card-body">
+                    <div class="stat-label">RNR</div>
+                    <div class="stat-value"><?= fmtNum($period_rnr) ?></div>
+                    <div class="stat-sub">Selected period</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-6 col-md-4 col-lg-2">
+            <div class="card stat-card card-amber">
+                <div class="card-body">
+                    <div class="stat-label">Callback</div>
+                    <div class="stat-value"><?= fmtNum($period_callback) ?></div>
+                    <div class="stat-sub">Selected period</div>
+                </div>
+            </div>
+        </div>
     </div>
 
     <!-- ══════════════════════════════════════════════════════════
@@ -807,7 +950,7 @@ if ($r) { $row = mysqli_fetch_assoc($r); $meta_month_cnt = (int)$row['c']; }
                     <div class="stat-label">Total Spend</div>
                     <div class="stat-value"><?= fmtMoney($total_spend) ?></div>
                     <div class="stat-sub">
-                        Meta: <?= fmtMoney($meta_spend) ?> &nbsp;|&nbsp; Google: <?= fmtMoney($google_spend) ?>
+                        FB: <?= fmtMoney($meta_spend) ?> &nbsp;|&nbsp; G: <?= fmtMoney($google_spend) ?>
                     </div>
                 </div>
             </div>
@@ -817,9 +960,9 @@ if ($r) { $row = mysqli_fetch_assoc($r); $meta_month_cnt = (int)$row['c']; }
             <div class="card stat-card card-orange">
                 <div class="card-body">
                     <div class="stat-label">Total Leads</div>
-                    <div class="stat-value"><?= $total_leads_api ?></div>
+                    <div class="stat-value"><?= fmtNum($total_leads_api) ?></div>
                     <div class="stat-sub">
-                        Meta: <?= $meta_leads ?> &nbsp;|&nbsp; Google: <?= $google_leads ?>
+                        FB: <?= fmtNum($meta_leads) ?> &nbsp;|&nbsp; G: <?= fmtNum($google_leads) ?>
                     </div>
                 </div>
             </div>
@@ -831,7 +974,7 @@ if ($r) { $row = mysqli_fetch_assoc($r); $meta_month_cnt = (int)$row['c']; }
                     <div class="stat-label">CPL</div>
                     <div class="stat-value"><?= fmtMoney($cpl_avg) ?></div>
                     <div class="stat-sub">
-                        Meta: <?= $meta_cpl_val > 0 ? fmtMoney($meta_cpl_val) : '–' ?> &nbsp;|&nbsp; Google: <?= $google_cpl_val > 0 ? fmtMoney($google_cpl_val) : '–' ?>
+                        FB: <?= $meta_cpl_val > 0 ? fmtMoney($meta_cpl_val) : '–' ?> &nbsp;|&nbsp; G: <?= $google_cpl_val > 0 ? fmtMoney($google_cpl_val) : '–' ?>
                     </div>
                 </div>
             </div>
@@ -877,10 +1020,12 @@ if ($r) { $row = mysqli_fetch_assoc($r); $meta_month_cnt = (int)$row['c']; }
                             <thead>
                                 <tr>
                                     <th>Date</th>
-                                    <th class="text-center">Leads</th>
-                                    <th class="text-center">Workable (WL)</th>
+                                    <th class="text-center">Total</th>
+                                    <th class="text-center">FB</th>
+                                    <th class="text-center">G</th>
+                                    <th class="text-center">Workable</th>
                                     <th class="text-center">WL %</th>
-                                    <th class="text-end">Meta Spend</th>
+                                    <th class="text-end">FB Spend</th>
                                     <th class="text-end">CPL</th>
                                 </tr>
                             </thead>
@@ -894,8 +1039,10 @@ if ($r) { $row = mysqli_fetch_assoc($r); $meta_month_cnt = (int)$row['c']; }
                             ?>
                             <tr class="<?= $rowClass ?>">
                                 <td class="fw-semibold"><?= date('D, d M', strtotime($dt)) ?></td>
-                                <td class="text-center"><span class="leads-badge"><?= $d['leads'] ?></span></td>
-                                <td class="text-center"><span class="wl-badge"><?= $d['wl'] ?></span></td>
+                                <td class="text-center"><span class="leads-badge"><?= fmtNum($d['leads']) ?></span></td>
+                                <td class="text-center"><small class="text-primary fw-semibold"><?= $d['meta_leads'] > 0 ? fmtNum($d['meta_leads']) : '–' ?></small></td>
+                                <td class="text-center"><small class="text-success fw-semibold"><?= $d['lp_leads'] > 0 ? fmtNum($d['lp_leads']) : '–' ?></small></td>
+                                <td class="text-center"><span class="wl-badge"><?= fmtNum($d['wl']) ?></span></td>
                                 <td class="text-center">
                                     <small class="text-muted"><?= $wl_pct ?>%</small>
                                 </td>
@@ -905,10 +1052,16 @@ if ($r) { $row = mysqli_fetch_assoc($r); $meta_month_cnt = (int)$row['c']; }
                             <?php endforeach; ?>
                             </tbody>
                             <tfoot class="table-light">
+                                <?php
+                                    $total_meta_daily = array_sum(array_column($daily_table, 'meta_leads'));
+                                    $total_lp_daily   = array_sum(array_column($daily_table, 'lp_leads'));
+                                ?>
                                 <tr class="fw-bold">
                                     <td>Total</td>
-                                    <td class="text-center"><span class="leads-badge"><?= $total_leads ?></span></td>
-                                    <td class="text-center"><span class="wl-badge"><?= $wl_period ?></span></td>
+                                    <td class="text-center"><span class="leads-badge"><?= fmtNum($total_leads) ?></span></td>
+                                    <td class="text-center"><small class="text-primary fw-semibold"><?= fmtNum($total_meta_daily) ?></small></td>
+                                    <td class="text-center"><small class="text-success fw-semibold"><?= fmtNum($total_lp_daily) ?></small></td>
+                                    <td class="text-center"><span class="wl-badge"><?= fmtNum($wl_period) ?></span></td>
                                     <td class="text-center">
                                         <small><?= $total_leads > 0 ? round(($wl_period / $total_leads) * 100) : 0 ?>%</small>
                                     </td>
@@ -930,13 +1083,27 @@ if ($r) { $row = mysqli_fetch_assoc($r); $meta_month_cnt = (int)$row['c']; }
                 <div class="card-body">
                     <?php $grand_total = $crm_total + $crm_no_feedback; ?>
                     <h6 class="fw-bold mb-3">🗂️ CRM Feedback
-                        <span class="badge bg-secondary ms-1"><?= $grand_total ?> total</span>
+                        <span class="badge bg-secondary ms-1"><?= fmtNum($grand_total) ?> total</span>
                     </h6>
                     <?php foreach ($crm_data as $fb):
-                        $pct = $grand_total > 0 ? round(($fb['cnt'] / $grand_total) * 100) : 0; ?>
-                    <div class="d-flex justify-content-between align-items-center mb-2">
-                        <div class="small" style="min-width:150px;"><?= feedbackBadge($fb['lead_feedback']) ?></div>
-                        <div class="small fw-bold text-end" style="min-width:28px;"><?= $fb['cnt'] ?></div>
+                        $pct    = $grand_total > 0 ? round(($fb['cnt'] / $grand_total) * 100) : 0;
+                        $fbCat  = categorizeCrmStatus($fb['lead_feedback']);
+                        // Build tooltip data
+                        if ($fbCat === 'non_qualified') {
+                            $ttParts = [];
+                            $catLabels = ['rnr'=>'RNR','callback'=>'Callback','working'=>'Working','no_feedback'=>'No Feedback'];
+                            foreach ($nq_from_prev as $prevCat => $prevCnt)
+                                $ttParts[] = ($catLabels[$prevCat] ?? ucfirst($prevCat)) . ' – ' . $prevCnt;
+                            $tooltip = !empty($ttParts) ? 'Converted from: ' . implode(', ', $ttParts) : 'No prior-status data';
+                        } else {
+                            $histTotal = $crm_history_totals[$fbCat] ?? 0;
+                            $tooltip   = 'Total history entries: ' . $histTotal;
+                        }
+                    ?>
+                    <div class="d-flex justify-content-between align-items-center mb-2 crm-fb-row"
+                         data-fb-tooltip="<?= htmlspecialchars($tooltip, ENT_QUOTES) ?>">
+                        <div class="small" style="min-width:150px;cursor:help;" title="<?= htmlspecialchars($tooltip, ENT_QUOTES) ?>"><?= feedbackBadge($fb['lead_feedback']) ?></div>
+                        <div class="small fw-bold text-end" style="min-width:28px;"><?= fmtNum($fb['cnt']) ?></div>
                         <div class="flex-grow-1 ms-2">
                             <div class="feedback-bar"><div class="feedback-fill" style="width:<?= $pct ?>%;"></div></div>
                         </div>
@@ -947,7 +1114,7 @@ if ($r) { $row = mysqli_fetch_assoc($r); $meta_month_cnt = (int)$row['c']; }
                         $pct_nf = $grand_total > 0 ? round(($crm_no_feedback / $grand_total) * 100) : 0; ?>
                     <div class="d-flex justify-content-between align-items-center mb-2 pt-1" style="border-top:1px dashed #e5e7eb;">
                         <div class="small" style="min-width:150px;"><span class="badge bg-secondary">No Feedback</span></div>
-                        <div class="small fw-bold text-end" style="min-width:28px;"><?= $crm_no_feedback ?></div>
+                        <div class="small fw-bold text-end" style="min-width:28px;"><?= fmtNum($crm_no_feedback) ?></div>
                         <div class="flex-grow-1 ms-2">
                             <div class="feedback-bar"><div class="feedback-fill" style="width:<?= $pct_nf ?>%; background:#9ca3af;"></div></div>
                         </div>
@@ -962,9 +1129,9 @@ if ($r) { $row = mysqli_fetch_assoc($r); $meta_month_cnt = (int)$row['c']; }
     </div>
 
     <!-- ══════════════════════════════════════════════════════════
-         SECTION 4 – META PERFORMANCE SUMMARY (Form / Campaign / AdSet / Ad)
+         SECTION 4 – PERFORMANCE SUMMARY (FB + Google / Campaign / AdSet / Ad)
     ═══════════════════════════════════════════════════════════ -->
-    <div class="section-title">📣 Meta Performance Summary — <?= htmlspecialchars($dt_label) ?></div>
+    <div class="section-title">📣 Performance Summary — <?= htmlspecialchars($dt_label) ?></div>
     <div class="card border-0 shadow-sm mb-4" style="border-radius:14px;">
         <div class="card-body">
 
@@ -977,17 +1144,22 @@ if ($r) { $row = mysqli_fetch_assoc($r); $meta_month_cnt = (int)$row['c']; }
                 </li>
                 <li class="nav-item">
                     <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-camp" type="button">
-                        Campaign <span class="badge bg-secondary ms-1"><?= count($meta_camp_data) ?></span>
+                        FB Campaign <span class="badge bg-secondary ms-1"><?= count($meta_camp_data) ?></span>
                     </button>
                 </li>
                 <li class="nav-item">
                     <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-adset" type="button">
-                        AdSet <span class="badge bg-secondary ms-1"><?= count($meta_adset_data) ?></span>
+                        FB AdSet <span class="badge bg-secondary ms-1"><?= count($meta_adset_data) ?></span>
                     </button>
                 </li>
                 <li class="nav-item">
                     <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-ad" type="button">
-                        Ad <span class="badge bg-secondary ms-1"><?= count($meta_ad_data) ?></span>
+                        FB Ad <span class="badge bg-secondary ms-1"><?= count($meta_ad_data) ?></span>
+                    </button>
+                </li>
+                <li class="nav-item">
+                    <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-google" type="button">
+                        Google Ads <span class="badge bg-secondary ms-1"><?= count($google_campaigns) ?></span>
                     </button>
                 </li>
             </ul>
@@ -1005,7 +1177,7 @@ if ($r) { $row = mysqli_fetch_assoc($r); $meta_month_cnt = (int)$row['c']; }
                                 <tr>
                                     <th>LG Form</th>
                                     <th class="text-end">Leads</th>
-                                    <th class="text-end">WL</th>
+                                    <th class="text-end">Workable</th>
                                     <th class="text-end">WL %</th>
                                 </tr>
                             </thead>
@@ -1015,8 +1187,8 @@ if ($r) { $row = mysqli_fetch_assoc($r); $meta_month_cnt = (int)$row['c']; }
                             ?>
                             <tr>
                                 <td style="max-width:400px;white-space:normal;word-break:break-word;"><?= htmlspecialchars($fn) ?></td>
-                                <td class="text-end"><span class="leads-badge"><?= $row['leads'] ?></span></td>
-                                <td class="text-end"><span class="wl-badge"><?= $row['wl'] ?></span></td>
+                                <td class="text-end"><span class="leads-badge"><?= fmtNum($row['leads']) ?></span></td>
+                                <td class="text-end"><span class="wl-badge"><?= fmtNum($row['wl']) ?></span></td>
                                 <td class="text-end text-muted"><?= $wl_pct ?>%</td>
                             </tr>
                             <?php endforeach; ?>
@@ -1024,12 +1196,10 @@ if ($r) { $row = mysqli_fetch_assoc($r); $meta_month_cnt = (int)$row['c']; }
                             <tfoot class="table-light">
                                 <tr class="fw-bold">
                                     <td>Total</td>
-                                    <td class="text-end"><span class="leads-badge"><?= array_sum(array_column($meta_form_data, 'leads')) ?></span></td>
-                                    <td class="text-end"><span class="wl-badge"><?= array_sum(array_column($meta_form_data, 'wl')) ?></span></td>
-                                    <td class="text-end text-muted">
-                                        <?php $tf_l = array_sum(array_column($meta_form_data,'leads')); $tf_w = array_sum(array_column($meta_form_data,'wl')); ?>
-                                        <?= $tf_l > 0 ? round(($tf_w/$tf_l)*100) : 0 ?>%
-                                    </td>
+                                    <?php $tf_l = array_sum(array_column($meta_form_data,'leads')); $tf_w = array_sum(array_column($meta_form_data,'wl')); ?>
+                                    <td class="text-end"><span class="leads-badge"><?= fmtNum($tf_l) ?></span></td>
+                                    <td class="text-end"><span class="wl-badge"><?= fmtNum($tf_w) ?></span></td>
+                                    <td class="text-end text-muted"><?= $tf_l > 0 ? round(($tf_w/$tf_l)*100) : 0 ?>%</td>
                                 </tr>
                             </tfoot>
                         </table>
@@ -1283,6 +1453,53 @@ if ($r) { $row = mysqli_fetch_assoc($r); $meta_month_cnt = (int)$row['c']; }
                     <?php endif; ?>
                 </div>
 
+                <!-- ── Google Ads Tab ── -->
+                <div class="tab-pane fade" id="tab-google">
+                    <?php if (empty($google_campaigns)): ?>
+                        <p class="text-muted small text-center py-3">No Google Ads data for selected period.</p>
+                    <?php else: ?>
+                    <div class="table-responsive">
+                        <table id="tbl_google" class="table table-sm table-hover dash-table w-100">
+                            <thead>
+                                <tr>
+                                    <th>Campaign</th>
+                                    <th class="text-end">Spend</th>
+                                    <th class="text-end">Leads (Conv.)</th>
+                                    <th class="text-end">CPL</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                            <?php
+                            $g_tbl_spend = 0; $g_tbl_leads = 0;
+                            foreach ($google_campaigns as $gcamp):
+                                $gcost  = (float)($gcamp['cost'] ?? 0);
+                                $gconv  = (int)($gcamp['conv'] ?? 0);
+                                $gcpl   = $gconv > 0 ? round($gcost / $gconv) : 0;
+                                $gname  = $gcamp['campaign_name'] ?? ($gcamp['name'] ?? '–');
+                                $g_tbl_spend += $gcost;
+                                $g_tbl_leads += $gconv;
+                            ?>
+                            <tr>
+                                <td style="max-width:360px;white-space:normal;word-break:break-word;"><?= htmlspecialchars($gname) ?></td>
+                                <td class="text-end"><?= fmtMoney($gcost) ?></td>
+                                <td class="text-end"><span class="leads-badge"><?= fmtNum($gconv) ?></span></td>
+                                <td class="text-end"><?= $gcpl > 0 ? fmtMoney($gcpl) : '–' ?></td>
+                            </tr>
+                            <?php endforeach; ?>
+                            </tbody>
+                            <tfoot class="table-light fw-bold">
+                                <tr>
+                                    <td>Total</td>
+                                    <td class="text-end"><?= fmtMoney($g_tbl_spend) ?></td>
+                                    <td class="text-end"><span class="leads-badge"><?= fmtNum($g_tbl_leads) ?></span></td>
+                                    <td class="text-end"><?= $g_tbl_leads > 0 ? fmtMoney(round($g_tbl_spend / $g_tbl_leads)) : '–' ?></td>
+                                </tr>
+                            </tfoot>
+                        </table>
+                    </div>
+                    <?php endif; ?>
+                </div>
+
             </div><!-- /tab-content -->
         </div>
     </div>
@@ -1308,6 +1525,40 @@ $(function(){
     $('#tbl_adset').DataTable({ order:[[9,'desc']], pageLength:25, responsive:true });
     // Ad: 0=camp,1=adset,2=ad,3=working..9=total,10=spend,11=cpl,12=relevancy
     $('#tbl_ad').DataTable({ order:[[10,'desc']], pageLength:25, responsive:true });
+    // Google Ads: 0=campaign,1=spend,2=leads,3=cpl
+    if ($('#tbl_google').length) {
+        $('#tbl_google').DataTable({ order:[[1,'desc']], pageLength:25, responsive:true });
+    }
+
+    // Re-adjust tables on tab switch
+    $('button[data-bs-toggle="tab"]').on('shown.bs.tab', function() {
+        $.fn.dataTable.tables({ visible:true, api:true }).columns.adjust();
+    });
+
+    // ── CRM Feedback tooltips (custom popover on hover) ───────────────────────
+    $('.crm-fb-row').each(function() {
+        var $row = $(this);
+        var tip  = $row.data('fb-tooltip');
+        if (!tip) return;
+        $row.css('cursor', 'help');
+        $row.on('mouseenter', function(e) {
+            var $tt = $('#crmFbTooltip');
+            if ($tt.length === 0) {
+                $tt = $('<div id="crmFbTooltip">').css({
+                    position:'fixed', background:'#1a2942', color:'#fff',
+                    padding:'6px 12px', borderRadius:'8px', fontSize:'0.78rem',
+                    pointerEvents:'none', zIndex:9999, maxWidth:'260px',
+                    boxShadow:'0 4px 16px rgba(0,0,0,0.25)', lineHeight:'1.4'
+                });
+                $('body').append($tt);
+            }
+            $tt.text(tip).css({ left: e.clientX + 12, top: e.clientY - 10 }).show();
+        }).on('mousemove', function(e) {
+            $('#crmFbTooltip').css({ left: e.clientX + 12, top: e.clientY - 10 });
+        }).on('mouseleave', function() {
+            $('#crmFbTooltip').hide();
+        });
+    });
 });
 </script>
 </body>
